@@ -4,9 +4,13 @@
   let socket = null;
   const board = document.getElementById('board');
 
-  function init() {
+  function init(staffToken) {
     socket = io();
-    socket.on('connect', () => socket.emit('join', { role: 'kitchen' }));
+    socket.on('connect', () => socket.emit('join', { role: 'kitchen', token: staffToken }));
+    socket.on('staff:unauthorized', () => {
+      localStorage.removeItem('easyway_staff_token');
+      location.reload();
+    });
     socket.on('kitchen:state', (data) => {
       items = data.items.filter((i) => COURSE_STATION[i.course] === STATION);
       render();
@@ -61,5 +65,5 @@
     );
   }
 
-  init();
+  requireStaffAuth(init);
 })();

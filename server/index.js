@@ -8,6 +8,7 @@ const { load } = require('./store');
 const models = require('./models');
 const { seedIfEmpty } = require('./seed');
 const { registerSocket } = require('./socket');
+const auth = require('./auth');
 
 load();
 seedIfEmpty();
@@ -50,6 +51,16 @@ app.get('/master/:token', (req, res) => {
 });
 
 // ---------- API ----------
+app.post('/api/staff/login', (req, res) => {
+  const pin = req.body && req.body.pin;
+  if (!auth.checkPin(pin)) return res.status(401).json({ ok: false });
+  res.json({ ok: true, token: auth.issueToken() });
+});
+
+app.post('/api/staff/verify', (req, res) => {
+  res.json({ ok: auth.isValidToken(req.body && req.body.token) });
+});
+
 app.get('/api/tables', (req, res) => {
   res.json({ tables: models.listTables() });
 });

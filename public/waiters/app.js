@@ -58,9 +58,13 @@
     });
   }
 
-  function init() {
+  function init(staffToken) {
     socket = io();
-    socket.on('connect', () => socket.emit('join', { role: 'kitchen' }));
+    socket.on('connect', () => socket.emit('join', { role: 'kitchen', token: staffToken }));
+    socket.on('staff:unauthorized', () => {
+      localStorage.removeItem('easyway_staff_token');
+      location.reload();
+    });
     socket.on('kitchen:state', (data) => {
       const ready = data.items.filter((i) => i.status === 'ready' && COURSE_STATION[i.course] === STATION);
       const newlyReady = ready.filter((i) => !knownReadyIds.has(i.id));
@@ -147,5 +151,5 @@
     render();
     renderCalls();
   }, 15000);
-  init();
+  requireStaffAuth(init);
 })();

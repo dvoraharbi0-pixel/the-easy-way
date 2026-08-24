@@ -1,5 +1,5 @@
 (function () {
-  const token = location.pathname.split('/master/')[1];
+  const tableToken = location.pathname.split('/master/')[1];
   let table = null;
   let session = null;
   let items = [];
@@ -7,6 +7,7 @@
   let selected = new Set();
   let socket = null;
   let cookingMsgIndex = 0;
+  let staffToken = null;
 
   setInterval(() => {
     cookingMsgIndex = (cookingMsgIndex + 1) % COOKING_MESSAGES.length;
@@ -30,7 +31,7 @@
   };
 
   async function init() {
-    const res = await fetch(`/api/table/${token}`);
+    const res = await fetch(`/api/table/${tableToken}`);
     if (!res.ok) {
       els.tableTitle.textContent = 'שולחן לא נמצא';
       return;
@@ -41,7 +42,11 @@
     els.tableTitle.textContent = `${table.name} · טאבלט מאסטר`;
 
     socket = io();
-    socket.on('connect', () => socket.emit('join', { role: 'master', sessionId: session.id }));
+    socket.on('connect', () => socket.emit('join', { role: 'master', sessionId: session.id, token: staffToken }));
+    socket.on('staff:unauthorized', () => {
+      localStorage.removeItem('easyway_staff_token');
+      location.reload();
+    });
     socket.on('session:state', (data) => {
       items = data.items;
       bill = data.bill || { diners: [] };
@@ -231,5 +236,8 @@
     els.totalSection.innerHTML = html;
   }
 
-  init();
+  requireStaffAuth((token) => {
+    staffToken = token;
+    init();
+  });
 })();

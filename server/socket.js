@@ -1,4 +1,5 @@
 const models = require('./models');
+const auth = require('./auth');
 
 function sessionRoom(sessionId) {
   return `session:${sessionId}`;
@@ -24,12 +25,18 @@ function broadcastCalls(io) {
 
 function registerSocket(io) {
   io.on('connection', (socket) => {
-    socket.on('join', ({ role, sessionId }) => {
+    socket.on('join', ({ role, sessionId, token }) => {
       if (role === 'kitchen') {
+        if (!auth.isValidToken(token)) return socket.emit('staff:unauthorized');
+        socket.data.isStaff = true;
         socket.join(KITCHEN_ROOM);
         socket.emit('kitchen:state', { items: models.kitchenQueue() });
         socket.emit('calls:state', { calls: models.listOpenCalls() });
         return;
+      }
+      if (role === 'master') {
+        if (!auth.isValidToken(token)) return socket.emit('staff:unauthorized');
+        socket.data.isStaff = true;
       }
       if (sessionId) {
         socket.join(sessionRoom(sessionId));
@@ -75,6 +82,7 @@ function registerSocket(io) {
     });
 
     socket.on('master:send', ({ sessionId, itemIds }) => {
+      if (!socket.data.isStaff) return;
       const sent = models.sendItems(itemIds);
       if (sent.length) {
         broadcastSession(io, sessionId);
@@ -83,6 +91,7 @@ function registerSocket(io) {
     });
 
     socket.on('master:fireCourse', ({ sessionId, course }) => {
+      if (!socket.data.isStaff) return;
       const sent = models.fireCourse(sessionId, course);
       if (sent.length) {
         broadcastSession(io, sessionId);
@@ -91,6 +100,7 @@ function registerSocket(io) {
     });
 
     socket.on('master:cancel', ({ sessionId, itemId }) => {
+      if (!socket.data.isStaff) return;
       const item = models.cancelItem(itemId);
       if (item) {
         broadcastSession(io, sessionId);
@@ -99,6 +109,7 @@ function registerSocket(io) {
     });
 
     socket.on('master:markServed', ({ sessionId, itemId }) => {
+      if (!socket.data.isStaff) return;
       const item = models.markServed(itemId);
       if (item) {
         broadcastSession(io, sessionId);
@@ -115,11 +126,13 @@ function registerSocket(io) {
     });
 
     socket.on('waiter:resolveCall', ({ callId }) => {
+      if (!socket.data.isStaff) return;
       const call = models.resolveCall(callId);
       if (call) broadcastCalls(io);
     });
 
     socket.on('master:closeSession', ({ sessionId }) => {
+      if (!socket.data.isStaff) return;
       const session = models.closeSession(sessionId);
       if (session) {
         io.to(sessionRoom(sessionId)).emit('session:closed');
@@ -127,6 +140,7 @@ function registerSocket(io) {
     });
 
     socket.on('kitchen:start', ({ itemId }) => {
+      if (!socket.data.isStaff) return;
       const item = models.startPreparing(itemId);
       if (item) {
         broadcastKitchen(io);
@@ -135,6 +149,7 @@ function registerSocket(io) {
     });
 
     socket.on('kitchen:ready', ({ itemId }) => {
+      if (!socket.data.isStaff) return;
       const item = models.markReady(itemId);
       if (item) {
         broadcastKitchen(io);
