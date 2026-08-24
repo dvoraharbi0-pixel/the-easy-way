@@ -7,6 +7,11 @@ const COURSE_LABELS = {
 const COURSE_ORDER = ['drink', 'starter', 'main', 'dessert'];
 const COURSE_ICON = { drink: '🥤', starter: '🥗', main: '🍽️', dessert: '🍰' };
 
+// Which prep station handles each course — the kitchen preps food, the bar
+// preps drinks, and the kitchen/bar/waiter screens all filter by this.
+const COURSE_STATION = { drink: 'bar', starter: 'kitchen', main: 'kitchen', dessert: 'kitchen' };
+const STATION_LABELS = { kitchen: '🍽️ מטבח', bar: '🍹 בר' };
+
 const STATUS_LABELS = {
   in_cart: 'בעגלה',
   sent: 'נשלח למטבח',

@@ -1,4 +1,5 @@
 (function () {
+  const STATION = window.STATION || 'kitchen';
   let items = [];
   let socket = null;
   const board = document.getElementById('board');
@@ -7,7 +8,7 @@
     socket = io();
     socket.on('connect', () => socket.emit('join', { role: 'kitchen' }));
     socket.on('kitchen:state', (data) => {
-      items = data.items;
+      items = data.items.filter((i) => COURSE_STATION[i.course] === STATION);
       render();
     });
   }

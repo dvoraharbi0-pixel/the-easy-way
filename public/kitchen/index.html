@@ -12,7 +12,10 @@
     <h1>👨‍🍳 מסך מטבח</h1>
     <div class="sub">כל המנות שנשלחו מהטאבלטים של השולחנות</div>
   </div>
-  <a href="/waiters" style="color:#fff;font-weight:700;text-decoration:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);border-radius:10px;padding:9px 14px">🔔 מסך מלצרים</a>
+  <div style="display:flex;gap:8px">
+    <a href="/bar" style="color:#fff;font-weight:700;text-decoration:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);border-radius:10px;padding:9px 14px">🍹 עמדת בר</a>
+    <a href="/waiters" style="color:#fff;font-weight:700;text-decoration:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);border-radius:10px;padding:9px 14px">🔔 מסך מלצרים</a>
+  </div>
 </header>
 
 <main style="max-width:1100px">
@@ -21,6 +24,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/shared/labels.js"></script>
+<script>window.STATION = 'kitchen';</script>
 <script src="/kitchen/app.js"></script>
 </body>
 </html>

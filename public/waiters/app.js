@@ -1,4 +1,5 @@
 (function () {
+  const STATION = window.STATION || 'kitchen';
   let items = [];
   let socket = null;
   let soundOn = false;
@@ -38,7 +39,7 @@
     socket = io();
     socket.on('connect', () => socket.emit('join', { role: 'kitchen' }));
     socket.on('kitchen:state', (data) => {
-      const ready = data.items.filter((i) => i.status === 'ready');
+      const ready = data.items.filter((i) => i.status === 'ready' && COURSE_STATION[i.course] === STATION);
       const newlyReady = ready.filter((i) => !knownReadyIds.has(i.id));
       if (newlyReady.length && soundOn) playChime();
       knownReadyIds = new Set(ready.map((i) => i.id));

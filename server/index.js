@@ -26,8 +26,14 @@ app.get('/', (req, res) => {
 app.get('/kitchen', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'kitchen', 'index.html'));
 });
+app.get('/bar', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'bar', 'index.html'));
+});
 app.get('/waiters', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'waiters', 'index.html'));
+});
+app.get('/waiters/bar', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'waiters-bar', 'index.html'));
 });
 
 // ---------- Static assets (real files, e.g. /master/app.js, /shared/style.css) ----------
