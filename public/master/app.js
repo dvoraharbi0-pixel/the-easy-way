@@ -103,7 +103,10 @@
               <div><b>${it.name}</b> × ${it.qty}</div>
               <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
             </div>
-            <span class="badge removed">🗑️ הוסרה</span>
+            <div class="actions">
+              <span class="badge removed">🗑️ הוסרה</span>
+              <button class="ghost" data-restore="${it.id}">↩️ החזרה לעגלה</button>
+            </div>
           </div>`;
       }
       html += `</div>`;
@@ -127,6 +130,11 @@
     els.pendingSection.querySelectorAll('[data-remove]').forEach((b) =>
       b.addEventListener('click', () => {
         socket.emit('cart:remove', { sessionId: session.id, itemId: b.dataset.remove });
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-restore]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('cart:restore', { sessionId: session.id, itemId: b.dataset.restore });
       })
     );
     els.pendingSection.querySelectorAll('[data-fire-course]').forEach((b) =>

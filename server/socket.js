@@ -59,6 +59,11 @@ function registerSocket(io) {
       if (removed) broadcastSession(io, sessionId);
     });
 
+    socket.on('cart:restore', ({ sessionId, itemId }) => {
+      const restored = models.restoreCartItem(itemId);
+      if (restored) broadcastSession(io, sessionId);
+    });
+
     socket.on('diner:setTip', ({ sessionId, dinerId, mode, value }) => {
       const diner = models.setDinerTip(dinerId, mode, value);
       if (diner) broadcastSession(io, sessionId);

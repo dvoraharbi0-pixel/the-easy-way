@@ -249,7 +249,10 @@
               <div><b>${it.name}</b> × ${it.qty}</div>
               <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
             </div>
-            <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
+            <div class="actions">
+              <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
+              ${status === 'removed' ? `<button class="ghost" data-restore="${it.id}">↩️ החזרה לעגלה</button>` : ''}
+            </div>
           </div>`;
       }
       html += `</div>`;
@@ -267,6 +270,11 @@
     els.cartView.querySelectorAll('[data-remove]').forEach((b) =>
       b.addEventListener('click', () => {
         socket.emit('cart:remove', { sessionId: session.id, itemId: b.dataset.remove });
+      })
+    );
+    els.cartView.querySelectorAll('[data-restore]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('cart:restore', { sessionId: session.id, itemId: b.dataset.restore });
       })
     );
     wireMyBill();

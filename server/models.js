@@ -171,6 +171,16 @@ function removeCartItem(itemId) {
   return item;
 }
 
+// Undo a removal — puts the item back in the cart, exactly as it was.
+function restoreCartItem(itemId) {
+  const item = state.orderItems[itemId];
+  if (!item || item.status !== REMOVED_STATUS) return null;
+  item.status = CART_STATUS;
+  item.removedAt = null;
+  save();
+  return item;
+}
+
 // Master sends chosen in-cart items to the kitchen ("fire").
 function sendItems(itemIds) {
   const sent = [];
@@ -324,6 +334,7 @@ module.exports = {
   getOrderItem,
   updateCartItemQty,
   removeCartItem,
+  restoreCartItem,
   sendItems,
   fireCourse,
   cancelItem,
