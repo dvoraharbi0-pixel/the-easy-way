@@ -7,7 +7,9 @@
   let diner = null;
   let menu = [];
   let items = [];
+  let bill = { diners: [] };
   let qtyDraft = {};
+  let customTipDraft = '';
   let view = 'menu';
   let socket = null;
 
@@ -89,6 +91,7 @@
     socket.on('connect', () => socket.emit('join', { role: 'diner', sessionId: session.id }));
     socket.on('session:state', (data) => {
       items = data.items;
+      bill = data.bill || { diners: [] };
       render();
     });
     socket.on('session:closed', () => {
@@ -200,6 +203,7 @@
     if (byStatus['in_cart'] && byStatus['in_cart'].length) {
       html += `<div class="notice">המנות שבעגלה עדיין לא נשלחו למטבח — הן ימתינו למאסטר טאבלט של השולחן, שיאשר ויתזמן את שליחתן.</div>`;
     }
+    html += renderMyBillHtml();
     els.cartView.innerHTML = html;
 
     els.cartView.querySelectorAll('[data-remove]').forEach((b) =>
@@ -207,6 +211,65 @@
         socket.emit('cart:remove', { sessionId: session.id, itemId: b.dataset.remove });
       })
     );
+    wireMyBill();
+  }
+
+  function myBillEntry() {
+    return (bill.diners || []).find((d) => d.dinerId === diner.id);
+  }
+
+  function renderMyBillHtml() {
+    const mine = myBillEntry();
+    if (!mine || mine.subtotal <= 0) return '';
+    let html = `<div class="section-title">💳 החשבון שלי</div><div class="card">
+      <div class="order-line">
+        <span>סכום המנות שלי</span><span>${money(mine.subtotal)}</span>
+      </div>
+      <div class="order-line">
+        <span>טיפ</span><span>${money(mine.tip)}</span>
+      </div>
+      <div style="margin:10px 0 6px;font-size:13px;color:var(--muted)">בחירת טיפ:</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">`;
+    for (const pct of TIP_PRESETS) {
+      const active = mine.tipMode === 'percent' && Number(mine.tipValue) === pct;
+      html += `<button class="${active ? 'primary' : 'ghost'}" data-tip-pct="${pct}">${pct}%</button>`;
+    }
+    html += `</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" inputmode="decimal" placeholder="סכום טיפ אחר בש״ח" id="customTipInput" value="${customTipDraft}" style="margin-bottom:0" />
+        <button class="ghost" id="customTipBtn">עדכון</button>
+      </div>
+      <div class="order-line" style="border-top:1px solid var(--line);margin-top:10px;padding-top:10px;font-weight:700">
+        <span>סה"כ לתשלום שלי</span><span>${money(mine.total)}</span>
+      </div>
+    </div>`;
+    return html;
+  }
+
+  function wireMyBill() {
+    els.cartView.querySelectorAll('[data-tip-pct]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('diner:setTip', {
+          sessionId: session.id,
+          dinerId: diner.id,
+          mode: 'percent',
+          value: Number(b.dataset.tipPct),
+        });
+      })
+    );
+    const customBtn = document.getElementById('customTipBtn');
+    const customInput = document.getElementById('customTipInput');
+    if (customInput) {
+      customInput.addEventListener('input', () => (customTipDraft = customInput.value));
+    }
+    if (customBtn) {
+      customBtn.addEventListener('click', () => {
+        const value = Number(customInput.value);
+        if (!isNaN(value) && value >= 0) {
+          socket.emit('diner:setTip', { sessionId: session.id, dinerId: diner.id, mode: 'amount', value });
+        }
+      });
+    }
   }
 
   function renderFab() {

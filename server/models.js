@@ -92,13 +92,31 @@ function closeSession(sessionId) {
 // ---------- Diners ----------
 function createDiner(sessionId, name) {
   const id = nanoid(8);
-  state.diners[id] = { id, sessionId, name: name || 'סועד/ת', createdAt: Date.now() };
+  state.diners[id] = {
+    id,
+    sessionId,
+    name: name || 'סועד/ת',
+    createdAt: Date.now(),
+    tipMode: null, // 'percent' | 'amount' | null
+    tipValue: 0,
+  };
   save();
   return state.diners[id];
 }
 
 function getDiner(id) {
   return state.diners[id] || null;
+}
+
+function setDinerTip(dinerId, mode, value) {
+  const diner = state.diners[dinerId];
+  if (!diner) return null;
+  const numeric = Math.max(0, Number(value) || 0);
+  if (mode !== 'percent' && mode !== 'amount') return null;
+  diner.tipMode = mode;
+  diner.tipValue = numeric;
+  save();
+  return diner;
 }
 
 // ---------- Order / cart items ----------
@@ -223,6 +241,42 @@ function kitchenQueue() {
     .sort((a, b) => a.sentAt - b.sentAt);
 }
 
+// Per-diner subtotal (their own dishes only) + chosen tip + total, plus table-wide totals.
+function sessionBillSummary(sessionId) {
+  const diners = Object.values(state.diners).filter((d) => d.sessionId === sessionId);
+  const items = Object.values(state.orderItems).filter(
+    (i) => i.sessionId === sessionId && i.status !== CANCELLED_STATUS
+  );
+
+  const perDiner = diners.map((diner) => {
+    const subtotal = items
+      .filter((i) => i.dinerId === diner.id)
+      .reduce((sum, i) => sum + i.price * i.qty, 0);
+    const tip =
+      diner.tipMode === 'percent'
+        ? Math.round((subtotal * diner.tipValue) / 100)
+        : diner.tipMode === 'amount'
+        ? Math.round(diner.tipValue)
+        : 0;
+    return {
+      dinerId: diner.id,
+      name: diner.name,
+      subtotal,
+      tipMode: diner.tipMode,
+      tipValue: diner.tipValue,
+      tip,
+      total: subtotal + tip,
+    };
+  });
+
+  return {
+    diners: perDiner,
+    subtotal: perDiner.reduce((s, d) => s + d.subtotal, 0),
+    tip: perDiner.reduce((s, d) => s + d.tip, 0),
+    total: perDiner.reduce((s, d) => s + d.total, 0),
+  };
+}
+
 function enrichItem(item) {
   const diner = getDiner(item.dinerId);
   const session = getSession(item.sessionId);
@@ -259,6 +313,8 @@ module.exports = {
   closeSession,
   createDiner,
   getDiner,
+  setDinerTip,
+  sessionBillSummary,
   addCartItem,
   getOrderItem,
   updateCartItemQty,

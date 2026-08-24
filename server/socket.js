@@ -10,7 +10,8 @@ function broadcastSession(io, sessionId) {
   const session = models.getSession(sessionId);
   if (!session) return;
   const items = models.listSessionItems(sessionId);
-  io.to(sessionRoom(sessionId)).emit('session:state', { session, items });
+  const bill = models.sessionBillSummary(sessionId);
+  io.to(sessionRoom(sessionId)).emit('session:state', { session, items, bill });
 }
 
 function broadcastKitchen(io) {
@@ -29,7 +30,11 @@ function registerSocket(io) {
         socket.join(sessionRoom(sessionId));
         const session = models.getSession(sessionId);
         if (session) {
-          socket.emit('session:state', { session, items: models.listSessionItems(sessionId) });
+          socket.emit('session:state', {
+            session,
+            items: models.listSessionItems(sessionId),
+            bill: models.sessionBillSummary(sessionId),
+          });
         }
       }
     });
@@ -52,6 +57,11 @@ function registerSocket(io) {
     socket.on('cart:remove', ({ sessionId, itemId }) => {
       const removed = models.removeCartItem(itemId);
       if (removed) broadcastSession(io, sessionId);
+    });
+
+    socket.on('diner:setTip', ({ sessionId, dinerId, mode, value }) => {
+      const diner = models.setDinerTip(dinerId, mode, value);
+      if (diner) broadcastSession(io, sessionId);
     });
 
     socket.on('master:send', ({ sessionId, itemIds }) => {

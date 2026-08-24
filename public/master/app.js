@@ -3,6 +3,7 @@
   let table = null;
   let session = null;
   let items = [];
+  let bill = { diners: [] };
   let selected = new Set();
   let socket = null;
 
@@ -36,6 +37,7 @@
     socket.on('connect', () => socket.emit('join', { role: 'master', sessionId: session.id }));
     socket.on('session:state', (data) => {
       items = data.items;
+      bill = data.bill || { diners: [] };
       render();
     });
     socket.on('session:closed', () => {
@@ -158,10 +160,27 @@
   }
 
   function renderTotal() {
-    const total = items.filter((i) => i.status !== 'cancelled').reduce((s, i) => s + i.price * i.qty, 0);
-    els.totalSection.innerHTML = `<div class="card" style="display:flex;justify-content:space-between;font-weight:700">
-      <span>סה"כ חשבון השולחן</span><span>${money(total)}</span>
+    const diners = (bill.diners || []).filter((d) => d.subtotal > 0);
+    let html = '';
+    if (diners.length) {
+      html += `<div class="section-title">💳 פירוט חשבון לפי סועד</div><div class="card">`;
+      for (const d of diners) {
+        const tipLabel = d.tipMode === 'percent' ? ` (טיפ ${d.tipValue}%)` : d.tipMode === 'amount' ? ` (טיפ מותאם)` : '';
+        html += `
+          <div class="order-line">
+            <div>
+              <div><b>👤 ${d.name}</b></div>
+              <div class="meta">מנות ${money(d.subtotal)} + טיפ ${money(d.tip)}${tipLabel}</div>
+            </div>
+            <div style="font-weight:700">${money(d.total)}</div>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+    html += `<div class="card" style="display:flex;justify-content:space-between;font-weight:700">
+      <span>סה"כ חשבון השולחן (כולל טיפים)</span><span>${money(bill.total || 0)}</span>
     </div>`;
+    els.totalSection.innerHTML = html;
   }
 
   init();

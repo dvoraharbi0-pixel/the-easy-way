@@ -19,3 +19,5 @@ const STATUS_LABELS = {
 function money(n) {
   return `₪${Number(n).toFixed(0)}`;
 }
+
+const TIP_PRESETS = [10, 12, 15, 20];
