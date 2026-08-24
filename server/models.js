@@ -49,6 +49,7 @@ function addMenuItem(item) {
     category: item.category || '',
     course: item.course,
     available: item.available !== false,
+    image: item.image || null,
   };
   save();
   return state.menuItems[id];

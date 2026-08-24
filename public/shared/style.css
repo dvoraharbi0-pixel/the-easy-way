@@ -10,7 +10,13 @@
   --warn: #c98a1c;
   --danger: #b3312c;
   --radius: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Heebo", "Arial Hebrew", Arial, sans-serif;
+  --font-body: "Heebo", -apple-system, BlinkMacSystemFont, "Segoe UI", "Arial Hebrew", Arial, sans-serif;
+  --font-display: "Frank Ruhl Libre", Georgia, "Times New Roman", serif;
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, .dish-name, .brand-name {
+  font-family: var(--font-display);
 }
 
 * { box-sizing: border-box; }
@@ -75,20 +81,73 @@ main {
   gap: 8px;
 }
 
-.menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line);
+.dish-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
 }
-.menu-item:last-child { border-bottom: none; }
+@media (min-width: 640px) {
+  .dish-grid { grid-template-columns: repeat(2, 1fr); }
+}
 
-.menu-item .info { flex: 1; }
-.menu-item .name { font-weight: 700; font-size: 15px; }
-.menu-item .desc { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-.menu-item .price { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.dish-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(36, 27, 18, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.dish-photo-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--line);
+}
+.dish-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.dish-photo.placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 46px;
+  background: linear-gradient(135deg, var(--brand), #d98a5f);
+}
+img.dish-photo { position: absolute; inset: 0; }
+
+.dish-body { padding: 14px 14px 4px; flex: 1; }
+.dish-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+.dish-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+
+.dish-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.dish-price-leader {
+  flex: 1;
+  border-bottom: 2px dotted var(--line);
+  margin-bottom: 4px;
+}
+.dish-price { font-weight: 700; color: var(--brand); font-size: 15.5px; white-space: nowrap; }
+
+.dish-actions {
+  padding: 10px 14px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.dish-actions .qty-control { margin-inline-end: auto; }
+.dish-actions input[type=text] { width: 100%; margin: 8px 0 0; }
 
 button {
   font-family: inherit;

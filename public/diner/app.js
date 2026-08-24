@@ -142,41 +142,64 @@
     renderFab();
   }
 
+  function dishPhotoHtml(m) {
+    const icon = COURSE_ICON[m.course] || '🍽️';
+    if (!m.image) {
+      return `<div class="dish-photo-wrap"><div class="dish-photo placeholder">${icon}</div></div>`;
+    }
+    return `<div class="dish-photo-wrap">
+      <div class="dish-photo placeholder">${icon}</div>
+      <img class="dish-photo" src="${m.image}" alt="${m.name}" loading="lazy" onerror="this.remove()" />
+    </div>`;
+  }
+
   function renderMenu() {
     if (!menu.length) {
       els.menuView.innerHTML = '<div class="empty">התפריט נטען...</div>';
       return;
     }
+    let navHtml = '<div class="pill-nav" style="position:sticky;top:0;z-index:5;background:var(--bg);padding:4px 0">';
     let html = '';
     for (const course of COURSE_ORDER) {
       const courseItems = menu.filter((m) => m.course === course);
       if (!courseItems.length) continue;
-      html += `<div class="section-title">${COURSE_ICON[course] || ''} ${COURSE_LABELS[course]}</div><div class="card">`;
+      navHtml += `<button data-nav="${course}">${COURSE_ICON[course] || ''} ${COURSE_LABELS[course]}</button>`;
+      html += `<div class="section-title" id="course-${course}">${COURSE_ICON[course] || ''} ${COURSE_LABELS[course]}</div><div class="dish-grid">`;
       for (const m of courseItems) {
         const qty = qtyDraft[m.id] || 1;
         const noteOpen = notesOpen.has(m.id);
         const noteVal = notesDraft[m.id] || '';
         html += `
-          <div class="menu-item">
-            <div class="info">
-              <div class="name">${m.name}</div>
-              ${m.description ? `<div class="desc">${m.description}</div>` : ''}
-              <div class="price">${money(m.price)}</div>
-              <button class="ghost" data-note-toggle="${m.id}" style="margin-top:6px;font-size:12px;padding:4px 9px">📝 ${noteOpen || noteVal ? 'עריכת הערה' : 'הוספת הערה'}</button>
-              ${noteOpen ? `<input type="text" data-note-input="${m.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" style="margin-top:6px" />` : ''}
+          <div class="dish-card">
+            ${dishPhotoHtml(m)}
+            <div class="dish-body">
+              <div class="dish-name">${m.name}</div>
+              ${m.description ? `<div class="dish-desc">${m.description}</div>` : ''}
+              <div class="dish-price-row"><span class="dish-price-leader"></span><span class="dish-price">${money(m.price)}</span></div>
             </div>
-            <div class="qty-control">
-              <button data-dec="${m.id}">－</button>
-              <span>${qty}</span>
-              <button data-inc="${m.id}">＋</button>
+            <div class="dish-actions">
+              <div class="qty-control">
+                <button data-dec="${m.id}">－</button>
+                <span>${qty}</span>
+                <button data-inc="${m.id}">＋</button>
+              </div>
+              <button class="ghost" data-note-toggle="${m.id}" style="font-size:12px;padding:6px 10px">📝 ${noteOpen || noteVal ? 'עריכת הערה' : 'הוספת הערה'}</button>
+              <button class="primary" data-add="${m.id}">הוספה</button>
+              ${noteOpen ? `<input type="text" data-note-input="${m.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" />` : ''}
             </div>
-            <button class="primary" data-add="${m.id}">הוספה</button>
           </div>`;
       }
       html += `</div>`;
     }
-    els.menuView.innerHTML = html;
+    navHtml += '</div>';
+    els.menuView.innerHTML = navHtml + html;
 
+    els.menuView.querySelectorAll('[data-nav]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const el = document.getElementById('course-' + b.dataset.nav);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+    );
     els.menuView.querySelectorAll('[data-inc]').forEach((b) =>
       b.addEventListener('click', () => {
         const id = b.dataset.inc;
