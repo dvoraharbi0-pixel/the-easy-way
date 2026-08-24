@@ -19,21 +19,26 @@ registerSocket(io);
 
 app.use(express.json());
 
-// ---------- Page routes (registered before static so exact paths never 301-redirect) ----------
+// ---------- Exact page routes (checked before static so they never 301-redirect) ----------
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'home', 'index.html'));
 });
+app.get('/kitchen', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'kitchen', 'index.html'));
+});
+
+// ---------- Static assets (real files, e.g. /master/app.js, /shared/style.css) ----------
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// ---------- Token page routes (fallback once static found no matching file, so
+// e.g. "/master/app.js" resolves to the real script above instead of "app.js" being
+// misread as a table token) ----------
 app.get('/t/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'diner', 'index.html'));
 });
 app.get('/master/:token', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'master', 'index.html'));
 });
-app.get('/kitchen', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'kitchen', 'index.html'));
-});
-
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ---------- API ----------
 app.get('/api/tables', (req, res) => {
