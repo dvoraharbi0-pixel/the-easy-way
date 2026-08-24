@@ -11,6 +11,7 @@ function emptyState() {
     sessions: {},
     diners: {},
     orderItems: {},
+    calls: {},
   };
 }
 

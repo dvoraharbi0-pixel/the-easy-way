@@ -40,6 +40,7 @@
             <div>
               <div><b>${it.name}</b> × ${it.qty}</div>
               <div style="font-size:12px;color:var(--muted)">${COURSE_LABELS[it.course]} · ${it.dinerName || ''}</div>
+              ${it.notes ? `<div style="font-size:12px;color:var(--danger);font-weight:700">📝 ${it.notes}</div>` : ''}
             </div>
             <div style="display:flex;align-items:center;gap:6px">
               <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>

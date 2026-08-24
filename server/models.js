@@ -120,6 +120,43 @@ function setDinerTip(dinerId, mode, value) {
   return diner;
 }
 
+// ---------- Waiter calls ("call for water / cutlery / the bill / help") ----------
+function createCall(sessionId, reason) {
+  const id = nanoid(10);
+  state.calls[id] = {
+    id,
+    sessionId,
+    reason: reason || 'עזרה',
+    status: 'open',
+    createdAt: Date.now(),
+    resolvedAt: null,
+  };
+  save();
+  return state.calls[id];
+}
+
+function resolveCall(callId) {
+  const call = state.calls[callId];
+  if (!call || call.status !== 'open') return null;
+  call.status = 'resolved';
+  call.resolvedAt = Date.now();
+  save();
+  return call;
+}
+
+function listOpenCalls() {
+  return Object.values(state.calls)
+    .filter((c) => c.status === 'open')
+    .map(enrichCall)
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
+function enrichCall(call) {
+  const session = getSession(call.sessionId);
+  const table = session ? getTable(session.tableId) : null;
+  return { ...call, tableNumber: table ? table.number : null, tableName: table ? table.name : null };
+}
+
 // ---------- Order / cart items ----------
 function addCartItem({ sessionId, dinerId, menuItemId, qty, notes }) {
   const menuItem = getMenuItem(menuItemId);
@@ -329,6 +366,9 @@ module.exports = {
   createDiner,
   getDiner,
   setDinerTip,
+  createCall,
+  resolveCall,
+  listOpenCalls,
   sessionBillSummary,
   addCartItem,
   getOrderItem,

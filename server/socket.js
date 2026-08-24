@@ -18,12 +18,17 @@ function broadcastKitchen(io) {
   io.to(KITCHEN_ROOM).emit('kitchen:state', { items: models.kitchenQueue() });
 }
 
+function broadcastCalls(io) {
+  io.to(KITCHEN_ROOM).emit('calls:state', { calls: models.listOpenCalls() });
+}
+
 function registerSocket(io) {
   io.on('connection', (socket) => {
     socket.on('join', ({ role, sessionId }) => {
       if (role === 'kitchen') {
         socket.join(KITCHEN_ROOM);
         socket.emit('kitchen:state', { items: models.kitchenQueue() });
+        socket.emit('calls:state', { calls: models.listOpenCalls() });
         return;
       }
       if (sessionId) {
@@ -99,6 +104,19 @@ function registerSocket(io) {
         broadcastSession(io, sessionId);
         broadcastKitchen(io);
       }
+    });
+
+    socket.on('diner:callWaiter', ({ sessionId, reason }, ack) => {
+      const session = models.getSession(sessionId);
+      if (!session) return;
+      models.createCall(sessionId, reason);
+      broadcastCalls(io);
+      if (ack) ack({ ok: true });
+    });
+
+    socket.on('waiter:resolveCall', ({ callId }) => {
+      const call = models.resolveCall(callId);
+      if (call) broadcastCalls(io);
     });
 
     socket.on('master:closeSession', ({ sessionId }) => {

@@ -81,6 +81,7 @@
               <div>
                 <div><b>${it.name}</b> × ${it.qty}</div>
                 <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
+                ${it.notes ? `<div class="meta" style="font-style:italic">📝 ${it.notes}</div>` : ''}
               </div>
             </label>
             <button class="primary" data-send-one="${it.id}">שלח</button>
@@ -173,7 +174,7 @@
       for (const it of cooking) {
         html += `
           <div class="cooking-item-row">
-            <span><b>${it.name}</b> × ${it.qty} · 👤 ${it.dinerName || ''}</span>
+            <span><b>${it.name}</b> × ${it.qty} · 👤 ${it.dinerName || ''}${it.notes ? ` · <i>📝 ${it.notes}</i>` : ''}</span>
             ${it.status === 'sent' ? `<button class="danger" data-cancel="${it.id}">ביטול</button>` : ''}
           </div>`;
       }

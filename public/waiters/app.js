@@ -1,12 +1,15 @@
 (function () {
   const STATION = window.STATION || 'kitchen';
   let items = [];
+  let calls = [];
   let socket = null;
   let soundOn = false;
   let audioCtx = null;
   let knownReadyIds = new Set();
+  let knownCallIds = new Set();
 
   const board = document.getElementById('board');
+  const callsBoard = document.getElementById('calls');
   const soundToggle = document.getElementById('soundToggle');
 
   soundToggle.addEventListener('click', () => {
@@ -35,6 +38,26 @@
     });
   }
 
+  // A different, more urgent-sounding alert (single repeated tone) for table
+  // calls, so waiters can tell "dish ready" and "table needs something" apart by ear.
+  function playCallChime() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    [0, 0.22, 0.44].forEach((offset) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 660;
+      const start = now + offset;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + 0.2);
+    });
+  }
+
   function init() {
     socket = io();
     socket.on('connect', () => socket.emit('join', { role: 'kitchen' }));
@@ -46,10 +69,46 @@
       items = ready.sort((a, b) => a.readyAt - b.readyAt);
       render();
     });
+    socket.on('calls:state', (data) => {
+      const newCalls = data.calls.filter((c) => !knownCallIds.has(c.id));
+      if (newCalls.length && soundOn) playCallChime();
+      knownCallIds = new Set(data.calls.map((c) => c.id));
+      calls = data.calls;
+      renderCalls();
+    });
   }
 
   function minutesAgo(ts) {
     return Math.max(0, Math.round((Date.now() - ts) / 60000));
+  }
+
+  function renderCalls() {
+    if (!calls.length) {
+      callsBoard.innerHTML = '';
+      return;
+    }
+    let html = `<div class="section-title">🔔 קריאות מהשולחנות</div>`;
+    for (const c of calls) {
+      const mins = minutesAgo(c.createdAt);
+      html += `
+        <div class="card" style="border-top:4px solid var(--danger);display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px;font-weight:800;color:var(--danger);min-width:70px;text-align:center">שולחן<br/>${c.tableNumber}</div>
+            <div>
+              <div style="font-size:16px"><b>${c.reason}</b></div>
+              <div class="meta">⏱️ לפני ${mins} דק'</div>
+            </div>
+          </div>
+          <button class="accent" data-resolve-call="${c.id}">✅ טופל</button>
+        </div>`;
+    }
+    callsBoard.innerHTML = html;
+
+    callsBoard.querySelectorAll('[data-resolve-call]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('waiter:resolveCall', { callId: b.dataset.resolveCall });
+      })
+    );
   }
 
   function render() {
@@ -68,6 +127,7 @@
             <div>
               <div style="font-size:16px"><b>${it.name}</b> × ${it.qty}</div>
               <div class="meta">👤 ${it.dinerName || ''} · ${COURSE_LABELS[it.course]}</div>
+              ${it.notes ? `<div class="meta" style="font-style:italic">📝 ${it.notes}</div>` : ''}
               <div class="meta" style="${overdue ? 'color:var(--danger);font-weight:700' : ''}">⏱️ ממתינה ${mins} דק'</div>
             </div>
           </div>
@@ -83,6 +143,9 @@
     );
   }
 
-  setInterval(render, 15000);
+  setInterval(() => {
+    render();
+    renderCalls();
+  }, 15000);
   init();
 })();

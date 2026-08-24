@@ -9,6 +9,8 @@
   let items = [];
   let bill = { diners: [] };
   let qtyDraft = {};
+  let notesDraft = {};
+  let notesOpen = new Set();
   let customTipDraft = '';
   let view = 'menu';
   let socket = null;
@@ -34,11 +36,36 @@
     nameModal: document.getElementById('nameModal'),
     nameInput: document.getElementById('nameInput'),
     nameSubmit: document.getElementById('nameSubmit'),
+    callWaiterBtn: document.getElementById('callWaiterBtn'),
+    callModal: document.getElementById('callModal'),
+    callCustomInput: document.getElementById('callCustomInput'),
+    callCustomBtn: document.getElementById('callCustomBtn'),
+    callModalClose: document.getElementById('callModalClose'),
   };
 
   els.navMenu.onclick = () => setView('menu');
   els.navCart.onclick = () => setView('cart');
   els.fabCartBtn.onclick = () => setView('cart');
+
+  els.callWaiterBtn.onclick = () => (els.callModal.style.display = 'flex');
+  els.callModalClose.onclick = () => (els.callModal.style.display = 'none');
+  els.callModal.querySelectorAll('[data-call-reason]').forEach((b) =>
+    b.addEventListener('click', () => sendCall(b.dataset.callReason))
+  );
+  els.callCustomBtn.onclick = () => {
+    const text = els.callCustomInput.value.trim();
+    if (text) sendCall(text);
+  };
+
+  function sendCall(reason) {
+    socket.emit('diner:callWaiter', { sessionId: session.id, reason });
+    els.callModal.style.display = 'none';
+    els.callCustomInput.value = '';
+    els.notice.innerHTML = `<div class="notice">🔔 הקריאה נשלחה — מלצר/ית בדרך!</div>`;
+    setTimeout(() => {
+      if (els.notice.innerHTML.includes('הקריאה נשלחה')) els.notice.innerHTML = '';
+    }, 4000);
+  }
 
   function setView(v) {
     view = v;
@@ -93,6 +120,7 @@
     const menuRes = await fetch('/api/menu');
     const menuData = await menuRes.json();
     menu = menuData.items;
+    els.callWaiterBtn.style.display = '';
 
     socket = io();
     socket.on('connect', () => socket.emit('join', { role: 'diner', sessionId: session.id }));
@@ -126,12 +154,16 @@
       html += `<div class="section-title">${COURSE_ICON[course] || ''} ${COURSE_LABELS[course]}</div><div class="card">`;
       for (const m of courseItems) {
         const qty = qtyDraft[m.id] || 1;
+        const noteOpen = notesOpen.has(m.id);
+        const noteVal = notesDraft[m.id] || '';
         html += `
           <div class="menu-item">
             <div class="info">
               <div class="name">${m.name}</div>
               ${m.description ? `<div class="desc">${m.description}</div>` : ''}
               <div class="price">${money(m.price)}</div>
+              <button class="ghost" data-note-toggle="${m.id}" style="margin-top:6px;font-size:12px;padding:4px 9px">📝 ${noteOpen || noteVal ? 'עריכת הערה' : 'הוספת הערה'}</button>
+              ${noteOpen ? `<input type="text" data-note-input="${m.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" style="margin-top:6px" />` : ''}
             </div>
             <div class="qty-control">
               <button data-dec="${m.id}">－</button>
@@ -159,16 +191,36 @@
         render();
       })
     );
+    els.menuView.querySelectorAll('[data-note-toggle]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const id = b.dataset.noteToggle;
+        if (notesOpen.has(id)) notesOpen.delete(id);
+        else notesOpen.add(id);
+        render();
+      })
+    );
+    els.menuView.querySelectorAll('[data-note-input]').forEach((inp) =>
+      inp.addEventListener('input', () => {
+        notesDraft[inp.dataset.noteInput] = inp.value;
+      })
+    );
     els.menuView.querySelectorAll('[data-add]').forEach((b) =>
       b.addEventListener('click', () => {
         const id = b.dataset.add;
         const qty = qtyDraft[id] || 1;
-        socket.emit('cart:add', { sessionId: session.id, dinerId: diner.id, menuItemId: id, qty });
+        const notes = (notesDraft[id] || '').trim();
+        socket.emit('cart:add', { sessionId: session.id, dinerId: diner.id, menuItemId: id, qty, notes });
         qtyDraft[id] = 1;
+        notesDraft[id] = '';
+        notesOpen.delete(id);
         b.textContent = 'נוסף ✓';
         setTimeout(() => (b.textContent = 'הוספה'), 900);
       })
     );
+  }
+
+  function noteLine(it) {
+    return it.notes ? `<div class="meta" style="font-style:italic">📝 ${it.notes}</div>` : '';
   }
 
   function renderCart() {
@@ -200,6 +252,7 @@
             <div>
               <div><b>${it.name}</b> × ${it.qty}</div>
               <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
+              ${noteLine(it)}
             </div>
             <div class="actions">
               <span class="badge in_cart">${STATUS_LABELS.in_cart}</span>
@@ -217,7 +270,7 @@
           <span class="cooking-dots"><span>.</span><span>.</span><span>.</span></span>
         </div>`;
       for (const it of cooking) {
-        html += `<div class="cooking-item-row"><span><b>${it.name}</b> × ${it.qty}</span><span>👤 ${it.dinerName || ''}</span></div>`;
+        html += `<div class="cooking-item-row"><span><b>${it.name}</b> × ${it.qty}${it.notes ? ` <i>· 📝 ${it.notes}</i>` : ''}</span><span>👤 ${it.dinerName || ''}</span></div>`;
       }
       html += `</div>`;
     }

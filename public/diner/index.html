@@ -12,6 +12,7 @@
     <h1 id="tableTitle">טוען...</h1>
     <div class="sub" id="dinerTag"></div>
   </div>
+  <button id="callWaiterBtn" style="display:none;background:rgba(255,255,255,0.15);color:#fff;border:1px solid rgba(255,255,255,0.4)">🔔 קריאה למלצר</button>
 </header>
 
 <main>
@@ -37,6 +38,23 @@
     <label class="field">השם שלי</label>
     <input type="text" id="nameInput" placeholder="לדוגמה: דנה" />
     <button class="primary" id="nameSubmit" style="width:100%">הצטרפות לשולחן</button>
+  </div>
+</div>
+
+<div id="callModal" class="modal-backdrop" style="display:none">
+  <div class="modal-sheet">
+    <h2>🔔 קריאה למלצר</h2>
+    <p style="color:var(--muted);font-size:13px">במה נוכל לעזור?</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+      <button class="ghost" data-call-reason="💧 מים בבקשה" style="text-align:right">💧 מים בבקשה</button>
+      <button class="ghost" data-call-reason="🍴 סכו&quot;ם בבקשה" style="text-align:right">🍴 סכו"ם בבקשה</button>
+      <button class="ghost" data-call-reason="🧾 חשבון בבקשה" style="text-align:right">🧾 חשבון בבקשה</button>
+      <button class="ghost" data-call-reason="✋ צריך/ה עזרה" style="text-align:right">✋ צריך/ה עזרה</button>
+    </div>
+    <label class="field">או הודעה אחרת</label>
+    <input type="text" id="callCustomInput" placeholder="לדוגמה: עוד פיתות בבקשה" />
+    <button class="primary" id="callCustomBtn" style="width:100%">שליחת קריאה</button>
+    <button class="ghost" id="callModalClose" style="width:100%;margin-top:8px">סגירה</button>
   </div>
 </div>
 
