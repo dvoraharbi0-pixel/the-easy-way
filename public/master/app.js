@@ -6,6 +6,13 @@
   let bill = { diners: [] };
   let selected = new Set();
   let socket = null;
+  let cookingMsgIndex = 0;
+
+  setInterval(() => {
+    cookingMsgIndex = (cookingMsgIndex + 1) % COOKING_MESSAGES.length;
+    const el = document.getElementById('cookingMsg');
+    if (el) el.textContent = COOKING_MESSAGES[cookingMsgIndex];
+  }, 2400);
 
   const els = {
     tableTitle: document.getElementById('tableTitle'),
@@ -121,35 +128,46 @@
       els.kitchenSection.innerHTML = '';
       return;
     }
+    let html = `<div class="section-title">👨‍🍳 סטטוס אצל המטבח</div>`;
+
     // "ready" is only visible on the waiters' board (and comes with the sound
-    // alert there) — the master tablet shows it the same as "preparing" until
-    // a waiter actually picks it up, which is when it flips to "served".
-    const order = ['sent', 'preparing', 'served', 'cancelled'];
-    let html = `<div class="section-title">👨‍🍳 סטטוס אצל המטבח</div><div class="card">`;
-    let any = false;
-    for (const status of order) {
-      const list = active.filter((i) =>
-        status === 'preparing' ? i.status === 'preparing' || i.status === 'ready' : i.status === status
-      );
+    // alert there) — the master tablet shows sent/preparing/ready all as one
+    // live "בהכנה" card, until a waiter actually picks it up (which is when
+    // it flips to "served").
+    const cooking = active.filter((i) => ['sent', 'preparing', 'ready'].includes(i.status));
+    if (cooking.length) {
+      html += `<div class="cooking-card">
+        <div class="cooking-banner">
+          <span id="cookingMsg">${COOKING_MESSAGES[cookingMsgIndex]}</span>
+          <span class="cooking-dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>`;
+      for (const it of cooking) {
+        html += `
+          <div class="cooking-item-row">
+            <span><b>${it.name}</b> × ${it.qty} · 👤 ${it.dinerName || ''}</span>
+            ${it.status === 'sent' ? `<button class="danger" data-cancel="${it.id}">ביטול</button>` : ''}
+          </div>`;
+      }
+      html += `</div>`;
+    }
+
+    for (const status of ['served', 'cancelled']) {
+      const list = active.filter((i) => i.status === status);
       if (!list.length) continue;
-      any = true;
+      const label = status === 'served' ? '🍽️ הוגש — בתאבון!' : STATUS_LABELS[status];
+      html += `<div class="card">`;
       for (const it of list) {
-        const label = status === 'served' ? '🍽️ הוגש — בתאבון!' : STATUS_LABELS[status];
         html += `
           <div class="order-line">
             <div>
               <div><b>${it.name}</b> × ${it.qty}</div>
               <div class="meta">👤 ${it.dinerName || ''} · ${COURSE_LABELS[it.course]}</div>
             </div>
-            <div class="actions">
-              <span class="badge ${status}">${label}</span>
-              ${status === 'sent' ? `<button class="danger" data-cancel="${it.id}">ביטול</button>` : ''}
-            </div>
+            <span class="badge ${status}">${label}</span>
           </div>`;
       }
+      html += `</div>`;
     }
-    if (!any) html += `<div class="empty">אין מנות בטיפול המטבח כרגע.</div>`;
-    html += `</div>`;
     els.kitchenSection.innerHTML = html;
 
     els.kitchenSection.querySelectorAll('[data-cancel]').forEach((b) =>
