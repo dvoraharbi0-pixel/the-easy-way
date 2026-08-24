@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>הדרך הקלה — הזמנה שולחנית</title>
+<link rel="stylesheet" href="/shared/style.css" />
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>🍽️ הדרך הקלה</h1>
+    <div class="sub">מערכת הזמנות שולחנית — סריקת QR/NFC, טאבלט מאסטר ומסך מטבח</div>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <b>איך זה עובד:</b>
+    <ol style="margin:8px 0 0;padding-inline-start:20px;font-size:14px;color:var(--muted);line-height:1.9">
+      <li>סועד סורק את קוד ה־QR (או ה־NFC) שעל השולחן ⟶ נפתח התפריט בנייד שלו.</li>
+      <li>כל מה שסועדי השולחן מוסיפים לעגלה מופיע בזמן אמת בטאבלט המאסטר שעל השולחן.</li>
+      <li>רק מהטאבלט המאסטר אפשר לשלוח מנות למטבח — כולל "פייר" לפי קורס (ראשונות/עיקריות/קינוחים).</li>
+      <li>כל עוד המטבח לא התחיל להכין מנה, אפשר לבטל אותה מהטאבלט המאסטר.</li>
+    </ol>
+  </div>
+
+  <div class="section-title">🪑 שולחנות</div>
+  <div id="tables" class="table-grid"></div>
+
+  <div class="section-title">👨‍🍳 צוות</div>
+  <div class="card">
+    <a href="/kitchen" style="color:var(--brand);font-weight:700;text-decoration:none">פתיחת מסך מטבח ⟵</a>
+  </div>
+</main>
+
+<script>
+  fetch('/api/tables').then(r => r.json()).then(({ tables }) => {
+    const el = document.getElementById('tables');
+    el.innerHTML = tables.map(t => `
+      <div class="card">
+        <b>${t.name}</b>
+        <img src="/api/qr/${t.token}.png" alt="QR שולחן ${t.number}" />
+        <a href="/t/${t.token}" target="_blank">תפריט סועד ⟵</a>
+        <a href="/master/${t.token}" target="_blank">טאבלט מאסטר ⟵</a>
+      </div>
+    `).join('');
+  });
+</script>
+</body>
+</html>

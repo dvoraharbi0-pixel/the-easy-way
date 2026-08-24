@@ -1,0 +1,27 @@
+{
+  "name": "the-easy-way",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dvoraharbi0-pixel/the-easy-way.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dvoraharbi0-pixel/the-easy-way/issues"
+  },
+  "homepage": "https://github.com/dvoraharbi0-pixel/the-easy-way#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "nanoid": "^3.3.18",
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.3"
+  }
+}

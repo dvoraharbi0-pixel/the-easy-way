@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>התפריט שלנו</title>
+<link rel="stylesheet" href="/shared/style.css" />
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1 id="tableTitle">טוען...</h1>
+    <div class="sub" id="dinerTag"></div>
+  </div>
+</header>
+
+<main>
+  <div class="pill-nav">
+    <button id="navMenu" class="active">📋 תפריט</button>
+    <button id="navCart">🧾 עגלת השולחן <span id="cartCount"></span></button>
+  </div>
+
+  <div id="notice"></div>
+
+  <section id="menuView"></section>
+  <section id="cartView" style="display:none"></section>
+</main>
+
+<div class="fab-cart" id="fabCart" style="display:none">
+  <button class="primary" id="fabCartBtn"></button>
+</div>
+
+<div id="nameModal" class="modal-backdrop" style="display:none">
+  <div class="modal-sheet">
+    <h2>ברוכים הבאים! 👋</h2>
+    <p style="color:var(--muted);font-size:13px">איך לקרוא לך? זה יעזור לצוות ולשאר הסועדים לדעת מי הזמין מה.</p>
+    <label class="field">השם שלי</label>
+    <input type="text" id="nameInput" placeholder="לדוגמה: דנה" />
+    <button class="primary" id="nameSubmit" style="width:100%">הצטרפות לשולחן</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/shared/labels.js"></script>
+<script src="/diner/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+(function () {
+  const token = location.pathname.split('/master/')[1];
+  let table = null;
+  let session = null;
+  let items = [];
+  let selected = new Set();
+  let socket = null;
+
+  const els = {
+    tableTitle: document.getElementById('tableTitle'),
+    notice: document.getElementById('notice'),
+    pendingSection: document.getElementById('pendingSection'),
+    kitchenSection: document.getElementById('kitchenSection'),
+    totalSection: document.getElementById('totalSection'),
+    closeSessionBtn: document.getElementById('closeSessionBtn'),
+  };
+
+  els.closeSessionBtn.onclick = () => {
+    if (confirm('לסגור את השולחן? הפעולה תסיים את ההזמנה הנוכחית.')) {
+      socket.emit('master:closeSession', { sessionId: session.id });
+    }
+  };
+
+  async function init() {
+    const res = await fetch(`/api/table/${token}`);
+    if (!res.ok) {
+      els.tableTitle.textContent = 'שולחן לא נמצא';
+      return;
+    }
+    const data = await res.json();
+    table = data.table;
+    session = data.session;
+    els.tableTitle.textContent = `${table.name} · טאבלט מאסטר`;
+
+    socket = io();
+    socket.on('connect', () => socket.emit('join', { role: 'master', sessionId: session.id }));
+    socket.on('session:state', (data) => {
+      items = data.items;
+      render();
+    });
+    socket.on('session:closed', () => {
+      els.notice.innerHTML = `<div class="notice">השולחן נסגר.</div>`;
+      els.pendingSection.innerHTML = '';
+      els.kitchenSection.innerHTML = '';
+    });
+  }
+
+  function render() {
+    renderPending();
+    renderKitchenStatus();
+    renderTotal();
+  }
+
+  function renderPending() {
+    const pending = items.filter((i) => i.status === 'in_cart');
+    if (!pending.length) {
+      els.pendingSection.innerHTML = `<div class="section-title">🛎️ ממתין לאישור</div><div class="empty">אין מנות חדשות בעגלה כרגע.</div>`;
+      return;
+    }
+    let html = `<div class="section-title">🛎️ ממתין לאישור — לחצו "שלח" כדי להעביר למטבח</div>`;
+    for (const course of COURSE_ORDER) {
+      const list = pending.filter((i) => i.course === course);
+      if (!list.length) continue;
+      html += `<div class="card course-group">
+        <div class="course-head">
+          <h3>${COURSE_ICON[course] || ''} ${COURSE_LABELS[course]}</h3>
+          <button class="warn" data-fire-course="${course}">🔥 שלח את כל ה${COURSE_LABELS[course]}</button>
+        </div>`;
+      for (const it of list) {
+        html += `
+          <div class="order-line">
+            <label class="checkbox-row">
+              <input type="checkbox" data-select="${it.id}" ${selected.has(it.id) ? 'checked' : ''} />
+              <div>
+                <div><b>${it.name}</b> × ${it.qty}</div>
+                <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
+              </div>
+            </label>
+            <button class="primary" data-send-one="${it.id}">שלח</button>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+    if (selected.size) {
+      html += `<button class="primary" id="sendSelectedBtn" style="width:100%;margin-bottom:12px">🔥 שליחת ${selected.size} מנות נבחרות למטבח</button>`;
+    }
+    els.pendingSection.innerHTML = html;
+
+    els.pendingSection.querySelectorAll('[data-select]').forEach((cb) =>
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.select;
+        if (cb.checked) selected.add(id);
+        else selected.delete(id);
+        render();
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-send-one]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('master:send', { sessionId: session.id, itemIds: [b.dataset.sendOne] });
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-fire-course]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('master:fireCourse', { sessionId: session.id, course: b.dataset.fireCourse });
+      })
+    );
+    const sendSelectedBtn = document.getElementById('sendSelectedBtn');
+    if (sendSelectedBtn) {
+      sendSelectedBtn.onclick = () => {
+        socket.emit('master:send', { sessionId: session.id, itemIds: Array.from(selected) });
+        selected.clear();
+      };
+    }
+  }
+
+  function renderKitchenStatus() {
+    const active = items.filter((i) => ['sent', 'preparing', 'ready', 'served', 'cancelled'].includes(i.status));
+    if (!active.length) {
+      els.kitchenSection.innerHTML = '';
+      return;
+    }
+    const order = ['sent', 'preparing', 'ready', 'served', 'cancelled'];
+    let html = `<div class="section-title">👨‍🍳 סטטוס אצל המטבח</div><div class="card">`;
+    let any = false;
+    for (const status of order) {
+      const list = active.filter((i) => i.status === status);
+      if (!list.length) continue;
+      any = true;
+      for (const it of list) {
+        html += `
+          <div class="order-line">
+            <div>
+              <div><b>${it.name}</b> × ${it.qty}</div>
+              <div class="meta">👤 ${it.dinerName || ''} · ${COURSE_LABELS[it.course]}</div>
+            </div>
+            <div class="actions">
+              <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
+              ${status === 'sent' ? `<button class="danger" data-cancel="${it.id}">ביטול</button>` : ''}
+              ${status === 'ready' ? `<button class="accent" data-served="${it.id}">✅ הוגש</button>` : ''}
+            </div>
+          </div>`;
+      }
+    }
+    if (!any) html += `<div class="empty">אין מנות בטיפול המטבח כרגע.</div>`;
+    html += `</div>`;
+    els.kitchenSection.innerHTML = html;
+
+    els.kitchenSection.querySelectorAll('[data-cancel]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('master:cancel', { sessionId: session.id, itemId: b.dataset.cancel });
+      })
+    );
+    els.kitchenSection.querySelectorAll('[data-served]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('master:markServed', { sessionId: session.id, itemId: b.dataset.served });
+      })
+    );
+  }
+
+  function renderTotal() {
+    const total = items.filter((i) => i.status !== 'cancelled').reduce((s, i) => s + i.price * i.qty, 0);
+    els.totalSection.innerHTML = `<div class="card" style="display:flex;justify-content:space-between;font-weight:700">
+      <span>סה"כ חשבון השולחן</span><span>${money(total)}</span>
+    </div>`;
+  }
+
+  init();
+})();
