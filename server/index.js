@@ -26,6 +26,9 @@ app.get('/', (req, res) => {
 app.get('/kitchen', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'kitchen', 'index.html'));
 });
+app.get('/waiters', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'waiters', 'index.html'));
+});
 
 // ---------- Static assets (real files, e.g. /master/app.js, /shared/style.css) ----------
 app.use(express.static(path.join(__dirname, '..', 'public')));

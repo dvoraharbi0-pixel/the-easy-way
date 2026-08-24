@@ -121,14 +121,20 @@
       els.kitchenSection.innerHTML = '';
       return;
     }
-    const order = ['sent', 'preparing', 'ready', 'served', 'cancelled'];
+    // "ready" is only visible on the waiters' board (and comes with the sound
+    // alert there) — the master tablet shows it the same as "preparing" until
+    // a waiter actually picks it up, which is when it flips to "served".
+    const order = ['sent', 'preparing', 'served', 'cancelled'];
     let html = `<div class="section-title">👨‍🍳 סטטוס אצל המטבח</div><div class="card">`;
     let any = false;
     for (const status of order) {
-      const list = active.filter((i) => i.status === status);
+      const list = active.filter((i) =>
+        status === 'preparing' ? i.status === 'preparing' || i.status === 'ready' : i.status === status
+      );
       if (!list.length) continue;
       any = true;
       for (const it of list) {
+        const label = status === 'served' ? '🍽️ הוגש — בתאבון!' : STATUS_LABELS[status];
         html += `
           <div class="order-line">
             <div>
@@ -136,9 +142,8 @@
               <div class="meta">👤 ${it.dinerName || ''} · ${COURSE_LABELS[it.course]}</div>
             </div>
             <div class="actions">
-              <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
+              <span class="badge ${status}">${label}</span>
               ${status === 'sent' ? `<button class="danger" data-cancel="${it.id}">ביטול</button>` : ''}
-              ${status === 'ready' ? `<button class="accent" data-served="${it.id}">✅ הוגש</button>` : ''}
             </div>
           </div>`;
       }
@@ -150,11 +155,6 @@
     els.kitchenSection.querySelectorAll('[data-cancel]').forEach((b) =>
       b.addEventListener('click', () => {
         socket.emit('master:cancel', { sessionId: session.id, itemId: b.dataset.cancel });
-      })
-    );
-    els.kitchenSection.querySelectorAll('[data-served]').forEach((b) =>
-      b.addEventListener('click', () => {
-        socket.emit('master:markServed', { sessionId: session.id, itemId: b.dataset.served });
       })
     );
   }

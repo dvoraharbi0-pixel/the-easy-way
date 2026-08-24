@@ -289,6 +289,44 @@ input[type=text], textarea {
 }
 .checkbox-row input { width: 18px; height: 18px; }
 
+.cooking-card {
+  background: linear-gradient(135deg, #fff6e8, #fff);
+  border: 1px solid #f0d9a8;
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.cooking-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #7a5a13;
+  font-size: 14.5px;
+  animation: cooking-pulse 1.8s ease-in-out infinite;
+}
+@keyframes cooking-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.cooking-dots span {
+  animation: cooking-bounce 1.2s infinite;
+  display: inline-block;
+}
+.cooking-dots span:nth-child(2) { animation-delay: 0.15s; }
+.cooking-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes cooking-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-3px); }
+}
+.cooking-item-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px dashed #f0d9a8;
+  font-size: 14px;
+}
+
 @media (min-width: 640px) {
   .table-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }

@@ -21,3 +21,14 @@ function money(n) {
 }
 
 const TIP_PRESETS = [10, 12, 15, 20];
+
+// Shown to diners instead of the real kitchen status, so "ready" doesn't leak
+// early and the wait feels a little less like watching a pot.
+const COOKING_MESSAGES = [
+  '👨‍🍳 השף כבר על זה...',
+  '🔥 מתבשל באהבה...',
+  '🥘 מכינים במיוחד בשבילכם...',
+  '✨ כמעט כמעט...',
+  '🍳 עובדים על זה במטבח...',
+  '⏳ עוד ממש רגע...',
+];

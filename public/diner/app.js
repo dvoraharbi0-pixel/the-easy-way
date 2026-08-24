@@ -12,6 +12,13 @@
   let customTipDraft = '';
   let view = 'menu';
   let socket = null;
+  let cookingMsgIndex = 0;
+
+  setInterval(() => {
+    cookingMsgIndex = (cookingMsgIndex + 1) % COOKING_MESSAGES.length;
+    const el = document.getElementById('cookingMsg');
+    if (el) el.textContent = COOKING_MESSAGES[cookingMsgIndex];
+  }, 2400);
 
   const els = {
     tableTitle: document.getElementById('tableTitle'),
@@ -173,15 +180,20 @@
     for (const it of items) {
       (byStatus[it.status] = byStatus[it.status] || []).push(it);
     }
-    const order = ['in_cart', 'sent', 'preparing', 'ready', 'served', 'cancelled'];
+    // Diners only ever see "in progress" — the real sent/preparing/ready
+    // distinction stays internal to the master tablet and kitchen, so a dish
+    // doesn't look "done" before it's actually on its way to the table.
+    const cooking = items.filter((i) => ['sent', 'preparing', 'ready'].includes(i.status));
     let html = '';
     let total = 0;
-    for (const status of order) {
-      const list = byStatus[status];
-      if (!list || !list.length) continue;
-      html += `<div class="section-title">${STATUS_LABELS[status]}</div><div class="card">`;
-      for (const it of list) {
-        if (it.status !== 'cancelled') total += it.price * it.qty;
+    for (const it of items) {
+      if (it.status !== 'cancelled') total += it.price * it.qty;
+    }
+
+    const inCart = byStatus['in_cart'] || [];
+    if (inCart.length) {
+      html += `<div class="section-title">${STATUS_LABELS.in_cart}</div><div class="card">`;
+      for (const it of inCart) {
         const mine = it.dinerId === diner.id;
         html += `
           <div class="order-line">
@@ -190,17 +202,63 @@
               <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
             </div>
             <div class="actions">
-              <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
-              ${status === 'in_cart' && mine ? `<button class="ghost" data-remove="${it.id}">הסרה</button>` : ''}
+              <span class="badge in_cart">${STATUS_LABELS.in_cart}</span>
+              ${mine ? `<button class="ghost" data-remove="${it.id}">הסרה</button>` : ''}
             </div>
           </div>`;
       }
       html += `</div>`;
     }
+
+    if (cooking.length) {
+      html += `<div class="section-title">👨‍🍳 בהכנה</div><div class="cooking-card">
+        <div class="cooking-banner">
+          <span id="cookingMsg">${COOKING_MESSAGES[cookingMsgIndex]}</span>
+          <span class="cooking-dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>`;
+      for (const it of cooking) {
+        html += `<div class="cooking-item-row"><span><b>${it.name}</b> × ${it.qty}</span><span>👤 ${it.dinerName || ''}</span></div>`;
+      }
+      html += `</div>`;
+    }
+
+    const served = byStatus['served'] || [];
+    if (served.length) {
+      html += `<div class="section-title">🍽️ בתאבון!</div><div class="card">`;
+      for (const it of served) {
+        html += `
+          <div class="order-line">
+            <div>
+              <div><b>${it.name}</b> × ${it.qty}</div>
+              <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
+            </div>
+            <span class="badge served">🍽️ הוגש</span>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+
+    for (const status of ['cancelled']) {
+      const list = byStatus[status];
+      if (!list || !list.length) continue;
+      html += `<div class="section-title">${STATUS_LABELS[status]}</div><div class="card">`;
+      for (const it of list) {
+        html += `
+          <div class="order-line">
+            <div>
+              <div><b>${it.name}</b> × ${it.qty}</div>
+              <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
+            </div>
+            <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+
     html += `<div class="card" style="display:flex;justify-content:space-between;font-weight:700">
       <span>סה"כ לשולחן</span><span>${money(total)}</span>
     </div>`;
-    if (byStatus['in_cart'] && byStatus['in_cart'].length) {
+    if (inCart.length) {
       html += `<div class="notice">המנות שבעגלה עדיין לא נשלחו למטבח — הן ימתינו למאסטר טאבלט של השולחן, שיאשר ויתזמן את שליחתן.</div>`;
     }
     html += renderMyBillHtml();
