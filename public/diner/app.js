@@ -187,7 +187,7 @@
     let html = '';
     let total = 0;
     for (const it of items) {
-      if (it.status !== 'cancelled') total += it.price * it.qty;
+      if (it.status !== 'cancelled' && it.status !== 'removed') total += it.price * it.qty;
     }
 
     const inCart = byStatus['in_cart'] || [];
@@ -238,7 +238,7 @@
       html += `</div>`;
     }
 
-    for (const status of ['cancelled']) {
+    for (const status of ['removed', 'cancelled']) {
       const list = byStatus[status];
       if (!list || !list.length) continue;
       html += `<div class="section-title">${STATUS_LABELS[status]}</div><div class="card">`;

@@ -7,6 +7,7 @@ const PREPARING_STATUS = 'preparing';
 const READY_STATUS = 'ready';
 const SERVED_STATUS = 'served';
 const CANCELLED_STATUS = 'cancelled';
+const REMOVED_STATUS = 'removed';
 
 const COURSE_ORDER = ['drink', 'starter', 'main', 'dessert'];
 const COURSE_LABELS = {
@@ -141,6 +142,7 @@ function addCartItem({ sessionId, dinerId, menuItemId, qty, notes }) {
     readyAt: null,
     servedAt: null,
     cancelledAt: null,
+    removedAt: null,
   };
   save();
   return state.orderItems[id];
@@ -158,12 +160,15 @@ function updateCartItemQty(itemId, qty) {
   return item;
 }
 
+// Soft-delete: keep the item (as `removed`) instead of erasing it, so the
+// master tablet and the diner who added it both still see that it happened.
 function removeCartItem(itemId) {
   const item = state.orderItems[itemId];
-  if (!item || item.status !== CART_STATUS) return false;
-  delete state.orderItems[itemId];
+  if (!item || item.status !== CART_STATUS) return null;
+  item.status = REMOVED_STATUS;
+  item.removedAt = Date.now();
   save();
-  return true;
+  return item;
 }
 
 // Master sends chosen in-cart items to the kitchen ("fire").
@@ -245,7 +250,7 @@ function kitchenQueue() {
 function sessionBillSummary(sessionId) {
   const diners = Object.values(state.diners).filter((d) => d.sessionId === sessionId);
   const items = Object.values(state.orderItems).filter(
-    (i) => i.sessionId === sessionId && i.status !== CANCELLED_STATUS
+    (i) => i.sessionId === sessionId && i.status !== CANCELLED_STATUS && i.status !== REMOVED_STATUS
   );
 
   const perDiner = diners.map((diner) => {

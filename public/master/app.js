@@ -62,11 +62,9 @@
 
   function renderPending() {
     const pending = items.filter((i) => i.status === 'in_cart');
-    if (!pending.length) {
-      els.pendingSection.innerHTML = `<div class="section-title">🛎️ ממתין לאישור</div><div class="empty">אין מנות חדשות בעגלה כרגע.</div>`;
-      return;
-    }
-    let html = `<div class="section-title">🛎️ ממתין לאישור — לחצו "שלח" כדי להעביר למטבח</div>`;
+    let html = pending.length
+      ? `<div class="section-title">🛎️ ממתין לאישור — לחצו "שלח" כדי להעביר למטבח</div>`
+      : `<div class="section-title">🛎️ ממתין לאישור</div><div class="empty">אין מנות חדשות בעגלה כרגע.</div>`;
     for (const course of COURSE_ORDER) {
       const list = pending.filter((i) => i.course === course);
       if (!list.length) continue;
@@ -86,6 +84,7 @@
               </div>
             </label>
             <button class="primary" data-send-one="${it.id}">שלח</button>
+            <button class="ghost" data-remove="${it.id}">הסרה</button>
           </div>`;
       }
       html += `</div>`;
@@ -93,6 +92,23 @@
     if (selected.size) {
       html += `<button class="primary" id="sendSelectedBtn" style="width:100%;margin-bottom:12px">🔥 שליחת ${selected.size} מנות נבחרות למטבח</button>`;
     }
+
+    const removed = items.filter((i) => i.status === 'removed');
+    if (removed.length) {
+      html += `<div class="section-title">🗑️ הוסרו מהעגלה</div><div class="card">`;
+      for (const it of removed) {
+        html += `
+          <div class="order-line">
+            <div>
+              <div><b>${it.name}</b> × ${it.qty}</div>
+              <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
+            </div>
+            <span class="badge removed">🗑️ הוסרה</span>
+          </div>`;
+      }
+      html += `</div>`;
+    }
+
     els.pendingSection.innerHTML = html;
 
     els.pendingSection.querySelectorAll('[data-select]').forEach((cb) =>
@@ -106,6 +122,11 @@
     els.pendingSection.querySelectorAll('[data-send-one]').forEach((b) =>
       b.addEventListener('click', () => {
         socket.emit('master:send', { sessionId: session.id, itemIds: [b.dataset.sendOne] });
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-remove]').forEach((b) =>
+      b.addEventListener('click', () => {
+        socket.emit('cart:remove', { sessionId: session.id, itemId: b.dataset.remove });
       })
     );
     els.pendingSection.querySelectorAll('[data-fire-course]').forEach((b) =>

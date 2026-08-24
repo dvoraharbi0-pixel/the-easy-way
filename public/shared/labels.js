@@ -19,6 +19,7 @@ const STATUS_LABELS = {
   ready: 'מוכן להגשה',
   served: 'הוגש',
   cancelled: 'בוטל',
+  removed: 'הוסרה מהעגלה',
 };
 
 function money(n) {
