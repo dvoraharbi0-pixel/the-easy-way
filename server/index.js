@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const http = require('http');
@@ -17,6 +18,22 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 registerSocket(io);
+
+// Menu item photos are matched by name only, in any of these formats - so
+// uploading a differently-formatted file (jpg vs png vs webp) just works,
+// instead of needing the exact extension baked into seed.js to match.
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+const MENU_IMAGES_DIR = path.join(__dirname, '..', 'public', 'images', 'menu');
+
+function resolveMenuImage(slug) {
+  if (!slug) return null;
+  for (const ext of IMAGE_EXTENSIONS) {
+    if (fs.existsSync(path.join(MENU_IMAGES_DIR, `${slug}.${ext}`))) {
+      return `/images/menu/${slug}.${ext}`;
+    }
+  }
+  return null;
+}
 
 app.use(express.json());
 
@@ -77,7 +94,8 @@ app.get('/api/qr/:token.png', async (req, res) => {
 });
 
 app.get('/api/menu', (req, res) => {
-  res.json({ items: models.listMenu(), courseOrder: models.COURSE_ORDER, courseLabels: models.COURSE_LABELS });
+  const items = models.listMenu().map((item) => ({ ...item, image: resolveMenuImage(item.imageSlug) }));
+  res.json({ items, courseOrder: models.COURSE_ORDER, courseLabels: models.COURSE_LABELS });
 });
 
 // A phone scans the table's QR/NFC token -> get (or open) the table's active session.
