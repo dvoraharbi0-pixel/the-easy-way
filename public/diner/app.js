@@ -182,7 +182,9 @@
         <div class="dish-price-row" style="margin-top:14px">
           <span class="dish-price-leader"></span><span class="dish-price">${money(m.price)}</span>
         </div>
-        <div class="dish-actions" style="padding:14px 0 0">
+        <label class="field" style="margin-top:12px">הערה למנה (אופציונלי)</label>
+        <input type="text" id="detailNoteInput" value="${notesDraft[m.id] || ''}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" />
+        <div class="dish-actions" style="padding:0 0 0">
           <div class="qty-control">
             <button id="detailDec">－</button>
             <span id="detailQty">${qty}</span>
@@ -206,9 +208,14 @@
       qtyDraft[m.id] = Math.max(1, (qtyDraft[m.id] || 1) - 1);
       renderDetailModal();
     };
+    document.getElementById('detailNoteInput').addEventListener('input', (e) => {
+      notesDraft[m.id] = e.target.value;
+    });
     document.getElementById('detailAdd').onclick = () => {
       const notes = (notesDraft[m.id] || '').trim();
       socket.emit('cart:add', { sessionId: session.id, dinerId: diner.id, menuItemId: m.id, qty: qtyDraft[m.id] || 1, notes });
+      notesDraft[m.id] = '';
+      notesOpen.delete(m.id);
       detailItemId = null;
       renderDetailModal();
       render();
