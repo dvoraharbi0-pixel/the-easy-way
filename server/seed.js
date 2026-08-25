@@ -11,11 +11,11 @@ function seedIfEmpty() {
   if (Object.keys(state.menuItems).length === 0) {
     const items = [
       // drinks
-      { name: 'מים מינרלים', price: 12, category: 'משקאות', course: 'drink', image: '/images/menu/water.jpg' },
-      { name: 'לימונדה ביתית עם נענע', price: 24, category: 'משקאות', course: 'drink', image: '/images/menu/lemonade.jpg' },
-      { name: 'קולה / קולה זירו', price: 16, category: 'משקאות', course: 'drink', image: '/images/menu/cola.jpg' },
-      { name: 'תה קר פירותי', price: 22, category: 'משקאות', course: 'drink', image: '/images/menu/iced-tea.jpg' },
-      { name: 'בירה מהחבית', price: 28, category: 'משקאות', course: 'drink', image: '/images/menu/beer.jpg' },
+      { name: 'מים מינרלים', price: 12, category: 'משקאות', course: 'drink', image: '/images/menu/water.png' },
+      { name: 'לימונדה ביתית עם נענע', price: 24, category: 'משקאות', course: 'drink', image: '/images/menu/lemonade.png' },
+      { name: 'קולה / קולה זירו', price: 16, category: 'משקאות', course: 'drink', image: '/images/menu/cola.png' },
+      { name: 'תה קר פירותי', price: 22, category: 'משקאות', course: 'drink', image: '/images/menu/iced-tea.png' },
+      { name: 'בירה מהחבית', price: 28, category: 'משקאות', course: 'drink', image: '/images/menu/beer.png' },
       { name: 'כוס יין בית, אדום או לבן', price: 34, category: 'משקאות', course: 'drink' },
       // starters
       { name: 'חומוס עם פטה', description: 'חומוס ביתי, פטריות מוקרמלות ופיתה חמה', price: 38, category: 'ראשונות', course: 'starter' },
