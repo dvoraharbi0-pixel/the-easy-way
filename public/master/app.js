@@ -4,6 +4,7 @@
   let session = null;
   let items = [];
   let bill = { diners: [] };
+  let calls = [];
   let selected = new Set();
   let notesDraft = {};
   let notesOpen = new Set();
@@ -20,6 +21,7 @@
   const els = {
     tableTitle: document.getElementById('tableTitle'),
     notice: document.getElementById('notice'),
+    callsSection: document.getElementById('callsSection'),
     pendingSection: document.getElementById('pendingSection'),
     kitchenSection: document.getElementById('kitchenSection'),
     totalSection: document.getElementById('totalSection'),
@@ -52,6 +54,7 @@
     socket.on('session:state', (data) => {
       items = data.items;
       bill = data.bill || { diners: [] };
+      calls = data.calls || [];
       render();
     });
     socket.on('session:closed', () => {
@@ -62,9 +65,29 @@
   }
 
   function render() {
+    renderCalls();
     renderPending();
     renderKitchenStatus();
     renderTotal();
+  }
+
+  function renderCalls() {
+    if (!els.callsSection) return;
+    if (!calls.length) {
+      els.callsSection.innerHTML = '';
+      return;
+    }
+    let html = `<div class="section-title">🔔 קריאות מהשולחן</div><div class="card">`;
+    for (const c of [...calls].reverse()) {
+      const open = c.status === 'open';
+      html += `
+        <div class="order-line">
+          <div><b>${c.reason}</b></div>
+          <span class="badge" style="background:${open ? 'var(--warn)' : 'var(--accent)'}">${open ? '🔔 ממתין למלצר' : '✅ בוצע'}</span>
+        </div>`;
+    }
+    html += `</div>`;
+    els.callsSection.innerHTML = html;
   }
 
   function renderPending() {
