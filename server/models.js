@@ -50,6 +50,9 @@ function addMenuItem(item) {
     course: item.course,
     available: item.available !== false,
     imageSlug: item.imageSlug || null,
+    ingredients: item.ingredients || '',
+    allergens: item.allergens || [],
+    spicy: item.spicy === true,
   };
   save();
   return state.menuItems[id];

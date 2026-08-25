@@ -152,6 +152,33 @@ main {
 .dish-actions .qty-control { margin-inline-end: auto; }
 .dish-actions input[type=text] { width: 100%; margin: 8px 0 0; }
 
+.dish-detail-link {
+  display: inline-block;
+  font-size: 12.5px;
+  color: var(--brand);
+  text-decoration: underline;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.spicy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-inline-start: 6px;
+}
+.allergen-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px; }
+.allergen-tag {
+  font-size: 12px;
+  background: var(--line);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.modal-sheet .dish-photo-wrap { border-radius: 12px; margin-bottom: 4px; }
+
 button {
   font-family: inherit;
   border: none;

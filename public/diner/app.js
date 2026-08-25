@@ -16,6 +16,7 @@
   let socket = null;
   let cookingMsgIndex = 0;
   let activeCourse = null;
+  let detailItemId = null;
 
   setInterval(() => {
     cookingMsgIndex = (cookingMsgIndex + 1) % COOKING_MESSAGES.length;
@@ -154,6 +155,66 @@
     </div>`;
   }
 
+  function renderDetailModal() {
+    const existing = document.getElementById('detailModal');
+    if (existing) existing.remove();
+    if (!detailItemId) return;
+    const m = menu.find((x) => x.id === detailItemId);
+    if (!m) return;
+
+    const qty = qtyDraft[m.id] || 1;
+    const allergensHtml =
+      m.allergens && m.allergens.length
+        ? `<div class="allergen-tags">${m.allergens.map((a) => `<span class="allergen-tag">${a}</span>`).join('')}</div>`
+        : `<div class="meta">ללא אלרגנים ידועים</div>`;
+
+    const div = document.createElement('div');
+    div.id = 'detailModal';
+    div.className = 'modal-backdrop';
+    div.innerHTML = `
+      <div class="modal-sheet">
+        ${dishPhotoHtml(m)}
+        <h2 style="margin:12px 0 2px">${m.name}${m.spicy ? '<span class="spicy-badge">🌶️ חריף</span>' : ''}</h2>
+        ${m.description ? `<p style="color:var(--muted);font-size:14px;margin:0 0 10px">${m.description}</p>` : ''}
+        ${m.ingredients ? `<div class="section-title" style="margin:12px 0 4px">מרכיבים</div><p style="font-size:14px;margin:0">${m.ingredients}</p>` : ''}
+        <div class="section-title" style="margin:12px 0 4px">אלרגנים</div>
+        ${allergensHtml}
+        <div class="dish-price-row" style="margin-top:14px">
+          <span class="dish-price-leader"></span><span class="dish-price">${money(m.price)}</span>
+        </div>
+        <div class="dish-actions" style="padding:14px 0 0">
+          <div class="qty-control">
+            <button id="detailDec">－</button>
+            <span id="detailQty">${qty}</span>
+            <button id="detailInc">＋</button>
+          </div>
+          <button class="primary" id="detailAdd" style="flex:1">הוספה לעגלה</button>
+        </div>
+        <button class="ghost" id="detailModalClose" style="width:100%;margin-top:10px">סגירה</button>
+      </div>`;
+    document.body.appendChild(div);
+
+    document.getElementById('detailModalClose').onclick = () => {
+      detailItemId = null;
+      renderDetailModal();
+    };
+    document.getElementById('detailInc').onclick = () => {
+      qtyDraft[m.id] = (qtyDraft[m.id] || 1) + 1;
+      renderDetailModal();
+    };
+    document.getElementById('detailDec').onclick = () => {
+      qtyDraft[m.id] = Math.max(1, (qtyDraft[m.id] || 1) - 1);
+      renderDetailModal();
+    };
+    document.getElementById('detailAdd').onclick = () => {
+      const notes = (notesDraft[m.id] || '').trim();
+      socket.emit('cart:add', { sessionId: session.id, dinerId: diner.id, menuItemId: m.id, qty: qtyDraft[m.id] || 1, notes });
+      detailItemId = null;
+      renderDetailModal();
+      render();
+    };
+  }
+
   function renderMenu() {
     if (!menu.length) {
       els.menuView.innerHTML = '<div class="empty">התפריט נטען...</div>';
@@ -179,10 +240,11 @@
       const noteVal = notesDraft[m.id] || '';
       html += `
         <div class="dish-card">
-          ${dishPhotoHtml(m)}
+          <div data-detail="${m.id}" style="cursor:pointer">${dishPhotoHtml(m)}</div>
           <div class="dish-body">
-            <div class="dish-name">${m.name}</div>
+            <div class="dish-name">${m.name}${m.spicy ? '<span class="spicy-badge">🌶️ חריף</span>' : ''}</div>
             ${m.description ? `<div class="dish-desc">${m.description}</div>` : ''}
+            <span class="dish-detail-link" data-detail="${m.id}">ℹ️ מרכיבים ואלרגנים</span>
             <div class="dish-price-row"><span class="dish-price-leader"></span><span class="dish-price">${money(m.price)}</span></div>
           </div>
           <div class="dish-actions">
@@ -204,6 +266,12 @@
       b.addEventListener('click', () => {
         activeCourse = b.dataset.nav;
         render();
+      })
+    );
+    els.menuView.querySelectorAll('[data-detail]').forEach((b) =>
+      b.addEventListener('click', () => {
+        detailItemId = b.dataset.detail;
+        renderDetailModal();
       })
     );
     els.menuView.querySelectorAll('[data-inc]').forEach((b) =>
