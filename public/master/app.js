@@ -5,6 +5,8 @@
   let items = [];
   let bill = { diners: [] };
   let selected = new Set();
+  let notesDraft = {};
+  let notesOpen = new Set();
   let socket = null;
   let cookingMsgIndex = 0;
   let staffToken = null;
@@ -79,8 +81,10 @@
           <button class="warn" data-fire-course="${course}">🔥 שלח את כל ה${COURSE_LABELS[course]}</button>
         </div>`;
       for (const it of list) {
+        const noteOpen = notesOpen.has(it.id);
+        const noteVal = notesDraft[it.id] !== undefined ? notesDraft[it.id] : it.notes || '';
         html += `
-          <div class="order-line">
+          <div class="order-line" style="flex-wrap:wrap">
             <label class="checkbox-row">
               <input type="checkbox" data-select="${it.id}" ${selected.has(it.id) ? 'checked' : ''} />
               <div>
@@ -90,7 +94,14 @@
               </div>
             </label>
             <button class="primary" data-send-one="${it.id}">שלח</button>
+            <button class="ghost" data-note-toggle="${it.id}" style="font-size:12px;padding:5px 9px">📝 ${it.notes ? 'עריכת הערה' : 'הוספת הערה'}</button>
             <button class="ghost" data-remove="${it.id}">הסרה</button>
+            ${
+              noteOpen
+                ? `<input type="text" data-note-input="${it.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" style="width:100%;margin-top:8px" />
+                   <button class="primary" data-note-save="${it.id}" style="width:100%">שמירת הערה</button>`
+                : ''
+            }
           </div>`;
       }
       html += `</div>`;
@@ -146,6 +157,32 @@
     els.pendingSection.querySelectorAll('[data-fire-course]').forEach((b) =>
       b.addEventListener('click', () => {
         socket.emit('master:fireCourse', { sessionId: session.id, course: b.dataset.fireCourse });
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-note-toggle]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const id = b.dataset.noteToggle;
+        if (notesOpen.has(id)) {
+          notesOpen.delete(id);
+        } else {
+          notesOpen.add(id);
+          const it = items.find((x) => x.id === id);
+          notesDraft[id] = it ? it.notes || '' : '';
+        }
+        render();
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-note-input]').forEach((inp) =>
+      inp.addEventListener('input', () => {
+        notesDraft[inp.dataset.noteInput] = inp.value;
+      })
+    );
+    els.pendingSection.querySelectorAll('[data-note-save]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const id = b.dataset.noteSave;
+        socket.emit('cart:updateNotes', { sessionId: session.id, itemId: id, notes: (notesDraft[id] || '').trim() });
+        notesOpen.delete(id);
+        render();
       })
     );
     const sendSelectedBtn = document.getElementById('sendSelectedBtn');

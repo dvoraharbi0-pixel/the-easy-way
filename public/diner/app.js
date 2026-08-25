@@ -8,6 +8,7 @@
   let menu = [];
   let items = [];
   let bill = { diners: [] };
+  let calls = [];
   let qtyDraft = {};
   let notesDraft = {};
   let notesOpen = new Set();
@@ -63,10 +64,20 @@
     socket.emit('diner:callWaiter', { sessionId: session.id, reason });
     els.callModal.style.display = 'none';
     els.callCustomInput.value = '';
-    els.notice.innerHTML = `<div class="notice">🔔 הקריאה נשלחה — מלצר/ית בדרך!</div>`;
-    setTimeout(() => {
-      if (els.notice.innerHTML.includes('הקריאה נשלחה')) els.notice.innerHTML = '';
-    }, 4000);
+  }
+
+  function renderCallStatus() {
+    const el = document.getElementById('callStatus');
+    if (!el) return;
+    if (!calls.length) {
+      el.innerHTML = '';
+      return;
+    }
+    const latest = calls[calls.length - 1];
+    el.innerHTML =
+      latest.status === 'open'
+        ? `<div class="notice">🔔 בקשה נשלחה: "${latest.reason}" — ממתינים למלצר/ית</div>`
+        : `<div class="notice" style="background:#122b1c;border-color:#2f6b46;color:#8fe0ac">✅ בוצע: "${latest.reason}"</div>`;
   }
 
   function setView(v) {
@@ -129,6 +140,7 @@
     socket.on('session:state', (data) => {
       items = data.items;
       bill = data.bill || { diners: [] };
+      calls = data.calls || [];
       render();
     });
     socket.on('session:closed', () => {
@@ -148,6 +160,7 @@
     if (view === 'menu') renderMenu();
     else renderCart();
     renderFab();
+    renderCallStatus();
   }
 
   function dishPhotoHtml(m) {
@@ -367,8 +380,10 @@
       html += `<div class="section-title">${STATUS_LABELS.in_cart}</div><div class="card">`;
       for (const it of inCart) {
         const mine = it.dinerId === diner.id;
+        const noteOpen = notesOpen.has(it.id);
+        const noteVal = notesDraft[it.id] !== undefined ? notesDraft[it.id] : it.notes || '';
         html += `
-          <div class="order-line">
+          <div class="order-line" style="flex-wrap:wrap">
             <div>
               <div><b>${it.name}</b> × ${it.qty}</div>
               <div class="meta">👤 ${it.dinerName || ''} · ${money(it.price * it.qty)}</div>
@@ -376,8 +391,15 @@
             </div>
             <div class="actions">
               <span class="badge in_cart">${STATUS_LABELS.in_cart}</span>
+              ${mine ? `<button class="ghost" data-note-toggle-cart="${it.id}" style="font-size:12px;padding:5px 9px">📝 ${it.notes ? 'עריכת הערה' : 'הוספת הערה'}</button>` : ''}
               ${mine ? `<button class="ghost" data-remove="${it.id}">הסרה</button>` : ''}
             </div>
+            ${
+              mine && noteOpen
+                ? `<input type="text" data-cart-note-input="${it.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" style="width:100%;margin-top:8px" />
+                   <button class="primary" data-cart-note-save="${it.id}" style="width:100%">שמירת הערה</button>`
+                : ''
+            }
           </div>`;
       }
       html += `</div>`;
@@ -448,6 +470,32 @@
     els.cartView.querySelectorAll('[data-restore]').forEach((b) =>
       b.addEventListener('click', () => {
         socket.emit('cart:restore', { sessionId: session.id, itemId: b.dataset.restore });
+      })
+    );
+    els.cartView.querySelectorAll('[data-note-toggle-cart]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const id = b.dataset.noteToggleCart;
+        if (notesOpen.has(id)) {
+          notesOpen.delete(id);
+        } else {
+          notesOpen.add(id);
+          const it = items.find((x) => x.id === id);
+          notesDraft[id] = it ? it.notes || '' : '';
+        }
+        render();
+      })
+    );
+    els.cartView.querySelectorAll('[data-cart-note-input]').forEach((inp) =>
+      inp.addEventListener('input', () => {
+        notesDraft[inp.dataset.cartNoteInput] = inp.value;
+      })
+    );
+    els.cartView.querySelectorAll('[data-cart-note-save]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const id = b.dataset.cartNoteSave;
+        socket.emit('cart:updateNotes', { sessionId: session.id, itemId: id, notes: (notesDraft[id] || '').trim() });
+        notesOpen.delete(id);
+        render();
       })
     );
     wireMyBill();

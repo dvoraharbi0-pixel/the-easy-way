@@ -164,6 +164,14 @@ function listOpenCalls() {
     .sort((a, b) => a.createdAt - b.createdAt);
 }
 
+// Every call for this table's session, open or resolved — lets the diner
+// who called see it get picked up, not just the staff-side board.
+function listSessionCalls(sessionId) {
+  return Object.values(state.calls)
+    .filter((c) => c.sessionId === sessionId)
+    .sort((a, b) => a.createdAt - b.createdAt);
+}
+
 function enrichCall(call) {
   const session = getSession(call.sessionId);
   const table = session ? getTable(session.tableId) : null;
@@ -206,6 +214,16 @@ function updateCartItemQty(itemId, qty) {
   const item = state.orderItems[itemId];
   if (!item || item.status !== CART_STATUS) return null;
   item.qty = Math.max(1, qty);
+  save();
+  return item;
+}
+
+// Notes stay editable only while the item is still in the cart — once it's
+// sent, the kitchen may already be reading the original note.
+function updateCartItemNotes(itemId, notes) {
+  const item = state.orderItems[itemId];
+  if (!item || item.status !== CART_STATUS) return null;
+  item.notes = (notes || '').trim();
   save();
   return item;
 }
@@ -383,10 +401,12 @@ module.exports = {
   createCall,
   resolveCall,
   listOpenCalls,
+  listSessionCalls,
   sessionBillSummary,
   addCartItem,
   getOrderItem,
   updateCartItemQty,
+  updateCartItemNotes,
   removeCartItem,
   restoreCartItem,
   sendItems,

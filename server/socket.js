@@ -12,7 +12,8 @@ function broadcastSession(io, sessionId) {
   if (!session) return;
   const items = models.listSessionItems(sessionId);
   const bill = models.sessionBillSummary(sessionId);
-  io.to(sessionRoom(sessionId)).emit('session:state', { session, items, bill });
+  const calls = models.listSessionCalls(sessionId);
+  io.to(sessionRoom(sessionId)).emit('session:state', { session, items, bill, calls });
 }
 
 function broadcastKitchen(io) {
@@ -75,6 +76,11 @@ function registerSocket(io) {
       if (item) broadcastSession(io, sessionId);
     });
 
+    socket.on('cart:updateNotes', ({ sessionId, itemId, notes }) => {
+      const item = models.updateCartItemNotes(itemId, notes);
+      if (item) broadcastSession(io, sessionId);
+    });
+
     socket.on('cart:remove', ({ sessionId, itemId }) => {
       const removed = models.removeCartItem(itemId);
       if (removed) broadcastSession(io, sessionId);
@@ -131,13 +137,17 @@ function registerSocket(io) {
       if (!session) return;
       models.createCall(sessionId, reason);
       broadcastCalls(io);
+      broadcastSession(io, sessionId);
       if (ack) ack({ ok: true });
     });
 
     socket.on('waiter:resolveCall', ({ callId }) => {
       if (!socket.data.isStaff) return;
       const call = models.resolveCall(callId);
-      if (call) broadcastCalls(io);
+      if (call) {
+        broadcastCalls(io);
+        broadcastSession(io, call.sessionId);
+      }
     });
 
     socket.on('master:closeSession', ({ sessionId }) => {
