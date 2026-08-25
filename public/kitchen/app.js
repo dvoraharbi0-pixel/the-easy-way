@@ -17,6 +17,13 @@
     });
   }
 
+  // How long an item may sit in each status before it's flagged as overdue.
+  const OVERDUE_MINUTES = { sent: 4, preparing: 12 };
+
+  function minutesAgo(ts) {
+    return Math.max(0, Math.round((Date.now() - ts) / 60000));
+  }
+
   function render() {
     if (!items.length) {
       board.innerHTML = '<div class="empty">אין הזמנות פתוחות כרגע 🎉</div>';
@@ -39,6 +46,10 @@
       html += `<div class="card kitchen-card ${worstStatus}">
         <h3>שולחן ${num}</h3>`;
       for (const it of list) {
+        const statusTs = it.status === 'sent' ? it.sentAt : it.status === 'preparing' ? it.preparingAt : it.readyAt;
+        const threshold = OVERDUE_MINUTES[it.status];
+        const mins = statusTs ? minutesAgo(statusTs) : null;
+        const overdue = threshold != null && mins != null && mins >= threshold;
         html += `
           <div class="item-row">
             <div>
@@ -48,6 +59,7 @@
             </div>
             <div style="display:flex;align-items:center;gap:6px">
               <span class="badge ${it.status}">${STATUS_LABELS[it.status]}</span>
+              ${mins != null ? `<span style="font-size:12px;${overdue ? 'color:var(--danger);font-weight:700' : 'color:var(--muted)'}">⏱️ ${mins} דק'</span>` : ''}
               ${it.status === 'sent' ? `<button class="warn" data-start="${it.id}">התחלת הכנה</button>` : ''}
               ${it.status === 'preparing' ? `<button class="accent" data-ready="${it.id}">מוכן</button>` : ''}
             </div>
@@ -65,5 +77,6 @@
     );
   }
 
+  setInterval(render, 15000);
   requireStaffAuth(init);
 })();
