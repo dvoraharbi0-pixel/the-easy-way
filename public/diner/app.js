@@ -87,7 +87,7 @@
     const data = await res.json();
     table = data.table;
     session = data.session;
-    els.tableTitle.textContent = table.name;
+    els.tableTitle.textContent = `רוטשילד 22 · ${table.name}`;
 
     const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && saved.sessionId === session.id) {
@@ -246,33 +246,43 @@
     navHtml += '</div>';
 
     const courseItems = menu.filter((m) => m.course === activeCourse);
-    let html = `<div class="dish-grid">`;
+    const categories = [];
     for (const m of courseItems) {
-      const qty = qtyDraft[m.id] || 1;
-      const noteOpen = notesOpen.has(m.id);
-      const noteVal = notesDraft[m.id] || '';
-      html += `
-        <div class="dish-card">
-          <div data-detail="${m.id}" style="cursor:pointer">${dishPhotoHtml(m)}</div>
-          <div class="dish-body">
-            <div class="dish-name">${m.name}${m.spicy ? '<span class="spicy-badge">🌶️ חריף</span>' : ''}</div>
-            ${m.description ? `<div class="dish-desc">${m.description}</div>` : ''}
-            <span class="dish-detail-link" data-detail="${m.id}">ℹ️ מרכיבים ואלרגנים</span>
-            <div class="dish-price-row"><span class="dish-price-leader"></span><span class="dish-price">${money(m.price)}</span></div>
-          </div>
-          <div class="dish-actions">
-            <div class="qty-control">
-              <button data-dec="${m.id}">－</button>
-              <span>${qty}</span>
-              <button data-inc="${m.id}">＋</button>
-            </div>
-            <button class="ghost" data-note-toggle="${m.id}" style="font-size:12px;padding:6px 10px">📝 ${noteOpen || noteVal ? 'עריכת הערה' : 'הוספת הערה'}</button>
-            <button class="primary" data-add="${m.id}">הוספה</button>
-            ${noteOpen ? `<input type="text" data-note-input="${m.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" />` : ''}
-          </div>
-        </div>`;
+      if (!categories.includes(m.category)) categories.push(m.category);
     }
-    html += `</div>`;
+    let html = '';
+    for (const cat of categories) {
+      if (categories.length > 1) {
+        html += `<div class="section-title"${cat === categories[0] ? ' style="margin-top:8px"' : ''}>${cat}</div>`;
+      }
+      html += `<div class="dish-grid">`;
+      for (const m of courseItems.filter((x) => x.category === cat)) {
+        const qty = qtyDraft[m.id] || 1;
+        const noteOpen = notesOpen.has(m.id);
+        const noteVal = notesDraft[m.id] || '';
+        html += `
+          <div class="dish-card">
+            <div data-detail="${m.id}" style="cursor:pointer">${dishPhotoHtml(m)}</div>
+            <div class="dish-body">
+              <div class="dish-name">${m.name}${m.spicy ? '<span class="spicy-badge">🌶️ חריף</span>' : ''}</div>
+              ${m.description ? `<div class="dish-desc">${m.description}</div>` : ''}
+              <span class="dish-detail-link" data-detail="${m.id}">ℹ️ מרכיבים ואלרגנים</span>
+              <div class="dish-price-row"><span class="dish-price-leader"></span><span class="dish-price">${money(m.price)}</span></div>
+            </div>
+            <div class="dish-actions">
+              <div class="qty-control">
+                <button data-dec="${m.id}">－</button>
+                <span>${qty}</span>
+                <button data-inc="${m.id}">＋</button>
+              </div>
+              <button class="ghost" data-note-toggle="${m.id}" style="font-size:12px;padding:6px 10px">📝 ${noteOpen || noteVal ? 'עריכת הערה' : 'הוספת הערה'}</button>
+              <button class="primary" data-add="${m.id}">הוספה</button>
+              ${noteOpen ? `<input type="text" data-note-input="${m.id}" value="${noteVal}" placeholder="לדוגמה: בלי בצל, רגיש/ה לבוטנים" />` : ''}
+            </div>
+          </div>`;
+      }
+      html += `</div>`;
+    }
     els.menuView.innerHTML = navHtml + html;
 
     els.menuView.querySelectorAll('[data-nav]').forEach((b) =>
