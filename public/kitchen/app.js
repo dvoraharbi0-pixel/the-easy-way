@@ -1,8 +1,51 @@
 (function () {
   const STATION = window.STATION || 'kitchen';
   let items = [];
+  let menuItems = [];
+  let menuPanelOpen = false;
   let socket = null;
+  let soundOn = false;
+  let audioCtx = null;
+  let knownSentIds = new Set();
   const board = document.getElementById('board');
+  const menuPanel = document.getElementById('menuPanel');
+  const menuToggleBtn = document.getElementById('menuToggleBtn');
+  const soundToggle = document.getElementById('soundToggle');
+
+  if (soundToggle) {
+    soundToggle.addEventListener('click', () => {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      soundOn = !soundOn;
+      soundToggle.textContent = soundOn ? '🔔 צליל פעיל' : '🔕 הפעלת צליל';
+      if (soundOn) playChime();
+    });
+  }
+
+  if (menuToggleBtn) {
+    menuToggleBtn.addEventListener('click', () => {
+      menuPanelOpen = !menuPanelOpen;
+      renderMenuPanel();
+    });
+  }
+
+  function playChime() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    [660, 990].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      const start = now + i * 0.14;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.3, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.35);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(start);
+      osc.stop(start + 0.4);
+    });
+  }
 
   function init(staffToken) {
     socket = io();
@@ -13,7 +56,15 @@
     });
     socket.on('kitchen:state', (data) => {
       items = data.items.filter((i) => COURSE_STATION[i.course] === STATION);
+      const sentIds = items.filter((i) => i.status === 'sent').map((i) => i.id);
+      const newlySent = sentIds.filter((id) => !knownSentIds.has(id));
+      if (newlySent.length && soundOn) playChime();
+      knownSentIds = new Set(sentIds);
       render();
+    });
+    socket.on('menu:state', (data) => {
+      menuItems = data.items.filter((i) => COURSE_STATION[i.course] === STATION);
+      renderMenuPanel();
     });
   }
 
@@ -22,6 +73,43 @@
 
   function minutesAgo(ts) {
     return Math.max(0, Math.round((Date.now() - ts) / 60000));
+  }
+
+  function renderMenuPanel() {
+    if (!menuPanel) return;
+    if (menuToggleBtn) {
+      menuToggleBtn.textContent = menuPanelOpen ? '📋 סגירת ניהול תפריט' : '📋 ניהול תפריט (זמינות)';
+    }
+    if (!menuPanelOpen) {
+      menuPanel.innerHTML = '';
+      return;
+    }
+    if (!menuItems.length) {
+      menuPanel.innerHTML = '<div class="card"><div class="empty">אין עדיין מנות בעמדה הזו</div></div>';
+      return;
+    }
+    let html = '<div class="card">';
+    for (const m of menuItems) {
+      const unavailable = m.available === false;
+      html += `
+        <div class="avail-toggle">
+          <span class="name${unavailable ? ' unavailable' : ''}">${COURSE_ICON[m.course] || ''} ${m.name}</span>
+          ${
+            unavailable
+              ? `<button class="accent" data-avail-on="${m.id}">✅ סמן כזמין</button>`
+              : `<button class="danger" data-avail-off="${m.id}">⛔ סמן כאזל</button>`
+          }
+        </div>`;
+    }
+    html += '</div>';
+    menuPanel.innerHTML = html;
+
+    menuPanel.querySelectorAll('[data-avail-off]').forEach((b) =>
+      b.addEventListener('click', () => socket.emit('staff:setAvailability', { itemId: b.dataset.availOff, available: false }))
+    );
+    menuPanel.querySelectorAll('[data-avail-on]').forEach((b) =>
+      b.addEventListener('click', () => socket.emit('staff:setAvailability', { itemId: b.dataset.availOn, available: true }))
+    );
   }
 
   function render() {

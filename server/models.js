@@ -69,6 +69,15 @@ function getMenuItem(id) {
   return state.menuItems[id] || null;
 }
 
+// Lets kitchen/bar staff 86 a dish mid-service without touching code.
+function setMenuItemAvailability(id, available) {
+  const item = state.menuItems[id];
+  if (!item) return null;
+  item.available = available !== false;
+  save();
+  return item;
+}
+
 // ---------- Sessions ----------
 function getOrCreateActiveSession(tableId) {
   const existing = Object.values(state.sessions).find(
@@ -364,6 +373,7 @@ module.exports = {
   addMenuItem,
   listMenu,
   getMenuItem,
+  setMenuItemAvailability,
   getOrCreateActiveSession,
   getSession,
   closeSession,

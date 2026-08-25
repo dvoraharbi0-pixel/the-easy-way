@@ -134,6 +134,12 @@
     socket.on('session:closed', () => {
       els.notice.innerHTML = `<div class="notice">🙏 השולחן נסגר, תודה שסעדתם איתנו!</div>`;
     });
+    // Kitchen/bar 86'd (or brought back) a dish mid-service — refresh the menu.
+    socket.on('menu:updated', async () => {
+      const r = await fetch('/api/menu');
+      menu = (await r.json()).items;
+      render();
+    });
 
     render();
   }

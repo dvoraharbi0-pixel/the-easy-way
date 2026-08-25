@@ -372,6 +372,18 @@ input[type=text], textarea {
 }
 .kitchen-card .item-row:last-child { border-bottom: none; }
 
+.avail-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.avail-toggle:last-child { border-bottom: none; }
+.avail-toggle .name { font-size: 14px; }
+.avail-toggle .name.unavailable { color: var(--muted); text-decoration: line-through; }
+
 .checkbox-row {
   display: flex;
   align-items: center;

@@ -23,6 +23,14 @@ function broadcastCalls(io) {
   io.to(KITCHEN_ROOM).emit('calls:state', { calls: models.listOpenCalls() });
 }
 
+// Kitchen/bar staff panels need every item (including already-86'd ones) so
+// they can flip availability back on; diners just get nudged to re-fetch
+// /api/menu, which already filters to available items only.
+function broadcastMenu(io) {
+  io.to(KITCHEN_ROOM).emit('menu:state', { items: models.listMenu({ onlyAvailable: false }) });
+  io.emit('menu:updated');
+}
+
 function registerSocket(io) {
   io.on('connection', (socket) => {
     socket.on('join', ({ role, sessionId, token }) => {
@@ -32,6 +40,7 @@ function registerSocket(io) {
         socket.join(KITCHEN_ROOM);
         socket.emit('kitchen:state', { items: models.kitchenQueue() });
         socket.emit('calls:state', { calls: models.listOpenCalls() });
+        socket.emit('menu:state', { items: models.listMenu({ onlyAvailable: false }) });
         return;
       }
       if (role === 'master') {
@@ -156,7 +165,13 @@ function registerSocket(io) {
         broadcastSession(io, item.sessionId);
       }
     });
+
+    socket.on('staff:setAvailability', ({ itemId, available }) => {
+      if (!socket.data.isStaff) return;
+      const item = models.setMenuItemAvailability(itemId, available);
+      if (item) broadcastMenu(io);
+    });
   });
 }
 
-module.exports = { registerSocket, broadcastSession, broadcastKitchen };
+module.exports = { registerSocket, broadcastSession, broadcastKitchen, broadcastMenu };
