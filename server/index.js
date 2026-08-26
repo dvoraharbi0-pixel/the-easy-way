@@ -35,6 +35,19 @@ function resolveMenuImage(slug) {
   return null;
 }
 
+// Same extension-agnostic matching as menu photos, but for branding assets
+// that live directly in public/images/ (not the menu/ subfolder) — e.g. the
+// diner landing page's hero banner, expected at public/images/hero.*
+const BRAND_IMAGES_DIR = path.join(__dirname, '..', 'public', 'images');
+function resolveBrandImage(name) {
+  for (const ext of IMAGE_EXTENSIONS) {
+    if (fs.existsSync(path.join(BRAND_IMAGES_DIR, `${name}.${ext}`))) {
+      return `/images/${name}.${ext}`;
+    }
+  }
+  return null;
+}
+
 app.use(express.json());
 
 // ---------- Exact page routes (checked before static so they never 301-redirect) ----------
@@ -103,7 +116,7 @@ app.get('/api/table/:token', (req, res) => {
   const table = models.getTableByToken(req.params.token);
   if (!table) return res.status(404).json({ error: 'table not found' });
   const session = models.getOrCreateActiveSession(table.id);
-  res.json({ table, session });
+  res.json({ table, session, heroImage: resolveBrandImage('hero') });
 });
 
 app.post('/api/session/:sessionId/diner', (req, res) => {

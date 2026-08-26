@@ -458,3 +458,59 @@ input[type=text], textarea {
 @media (min-width: 640px) {
   .table-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
+
+.landing-view {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--brand), #1a0a12), linear-gradient(0deg, rgba(0,0,0,0.55), rgba(0,0,0,0.55));
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay;
+  padding: 40px 20px;
+}
+.landing-overlay {
+  text-align: center;
+  width: 100%;
+  max-width: 460px;
+}
+.landing-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 8px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.65);
+}
+.landing-sub {
+  color: #fff;
+  opacity: 0.9;
+  margin-bottom: 26px;
+  font-size: 15px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+}
+.landing-cta {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.menu-banner {
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--brand), #7a1a4a);
+}
+.menu-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}

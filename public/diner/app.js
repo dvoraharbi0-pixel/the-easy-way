@@ -5,6 +5,7 @@
   let table = null;
   let session = null;
   let diner = null;
+  let heroImage = null;
   let menu = [];
   let items = [];
   let bill = { diners: [] };
@@ -98,8 +99,25 @@
     const data = await res.json();
     table = data.table;
     session = data.session;
+    heroImage = data.heroImage;
     els.tableTitle.textContent = `רוטשילד 22 · ${table.name}`;
+    showLanding();
+  }
 
+  function showLanding() {
+    const landing = document.getElementById('landingView');
+    const sub = document.getElementById('landingTableName');
+    if (sub) sub.textContent = table.name;
+    if (heroImage) {
+      landing.style.backgroundImage = `linear-gradient(0deg, rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('${heroImage}')`;
+      landing.style.backgroundBlendMode = 'normal';
+    }
+    landing.style.display = 'flex';
+    document.getElementById('landingEnterBtn').onclick = enterApp;
+  }
+
+  function enterApp() {
+    document.getElementById('landingView').style.display = 'none';
     const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
     if (saved && saved.sessionId === session.id) {
       diner = { id: saved.dinerId, name: saved.name };
@@ -251,6 +269,8 @@
       activeCourse = availableCourses[0];
     }
 
+    const bannerHtml = heroImage ? `<div class="menu-banner"><img src="${heroImage}" alt="רוטשילד 22" /></div>` : '';
+
     let navHtml = '<div class="course-tabs" style="position:sticky;top:0;z-index:5;background:var(--bg);padding:4px 0">';
     for (const course of availableCourses) {
       const active = course === activeCourse;
@@ -296,7 +316,7 @@
       }
       html += `</div>`;
     }
-    els.menuView.innerHTML = navHtml + html;
+    els.menuView.innerHTML = bannerHtml + navHtml + html;
 
     els.menuView.querySelectorAll('[data-nav]').forEach((b) =>
       b.addEventListener('click', () => {
