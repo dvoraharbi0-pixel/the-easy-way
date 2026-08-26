@@ -291,6 +291,30 @@ button.ghost { background: transparent; border: 1px solid var(--line); }
   border-color: var(--brand);
 }
 
+/* Course tabs (שתייה קלה / אלכוהול / קוקטיילים / ...) scroll horizontally
+   instead of squeezing into equal-width slots — the list can grow past
+   what fits a phone screen at once. */
+.course-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.course-tabs::-webkit-scrollbar { display: none; }
+.course-tabs button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.course-tabs button.active {
+  background: var(--brand);
+  color: var(--brand-ink);
+  border-color: var(--brand);
+}
+
 .diner-tag {
   font-size: 11px;
   color: #fff;

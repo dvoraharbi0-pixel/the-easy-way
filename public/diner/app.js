@@ -251,7 +251,7 @@
       activeCourse = availableCourses[0];
     }
 
-    let navHtml = '<div class="pill-nav" style="position:sticky;top:0;z-index:5;background:var(--bg);padding:4px 0">';
+    let navHtml = '<div class="course-tabs" style="position:sticky;top:0;z-index:5;background:var(--bg);padding:4px 0">';
     for (const course of availableCourses) {
       const active = course === activeCourse;
       navHtml += `<button data-nav="${course}" class="${active ? 'active' : ''}">${COURSE_ICON[course] || ''} ${COURSE_LABELS[course]}</button>`;
