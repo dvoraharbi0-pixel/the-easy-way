@@ -48,7 +48,8 @@ header.top {
 }
 
 header.top h1 {
-  font-size: 18px;
+  font-size: 25px;
+  font-weight: 800;
   margin: 0;
 }
 
@@ -72,10 +73,11 @@ main {
 }
 
 .section-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 800;
+  font-family: var(--font-display);
   color: var(--brand);
-  margin: 22px 0 8px;
+  margin: 26px 0 10px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -127,7 +129,7 @@ main {
 }
 
 .dish-body { padding: 14px 14px 4px; flex: 1; }
-.dish-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; line-height: 1.3; }
+.dish-name { font-size: 21px; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
 .dish-desc { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
 
 .dish-price-row {
@@ -326,7 +328,7 @@ button.ghost { background: transparent; border: 1px solid var(--line); }
   max-height: 82vh;
   overflow-y: auto;
 }
-.modal-sheet h2 { margin-top: 0; font-size: 17px; }
+.modal-sheet h2 { margin-top: 0; font-size: 22px; font-weight: 800; }
 
 .course-group { margin-bottom: 18px; }
 .course-head {
@@ -335,7 +337,7 @@ button.ghost { background: transparent; border: 1px solid var(--line); }
   align-items: center;
   margin-bottom: 6px;
 }
-.course-head h3 { font-size: 14px; margin: 0; color: var(--brand); }
+.course-head h3 { font-size: 18px; font-weight: 800; margin: 0; color: var(--brand); }
 
 label.field {
   display: block;
@@ -361,7 +363,7 @@ input[type=text], textarea {
 .kitchen-card { border-top: 4px solid var(--warn); }
 .kitchen-card.preparing { border-top-color: #3563a8; }
 .kitchen-card.ready { border-top-color: var(--accent); }
-.kitchen-card h3 { margin: 0 0 4px; font-size: 15px; }
+.kitchen-card h3 { margin: 0 0 4px; font-size: 19px; font-weight: 800; }
 .kitchen-card .item-row {
   display: flex;
   justify-content: space-between;
