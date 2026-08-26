@@ -9,9 +9,10 @@ const SERVED_STATUS = 'served';
 const CANCELLED_STATUS = 'cancelled';
 const REMOVED_STATUS = 'removed';
 
-const COURSE_ORDER = ['drink', 'starter', 'main', 'dessert'];
+const COURSE_ORDER = ['drink', 'alcohol', 'starter', 'main', 'dessert'];
 const COURSE_LABELS = {
-  drink: 'שתייה',
+  drink: 'שתייה קלה',
+  alcohol: 'אלכוהול',
   starter: 'ראשונות',
   main: 'עיקריות',
   dessert: 'קינוחים',
