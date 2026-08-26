@@ -24,6 +24,13 @@ function broadcastCalls(io) {
   io.to(KITCHEN_ROOM).emit('calls:state', { calls: models.listOpenCalls() });
 }
 
+// Lets the waiters' board show every active table's running total, so staff
+// aren't "in the dark" about what a table owes without walking over to its
+// master tablet.
+function broadcastTableTotals(io) {
+  io.to(KITCHEN_ROOM).emit('tables:state', { tables: models.listActiveTableTotals() });
+}
+
 // Kitchen/bar staff panels need every item (including already-86'd ones) so
 // they can flip availability back on; diners just get nudged to re-fetch
 // /api/menu, which already filters to available items only.
@@ -42,6 +49,7 @@ function registerSocket(io) {
         socket.emit('kitchen:state', { items: models.kitchenQueue() });
         socket.emit('calls:state', { calls: models.listOpenCalls() });
         socket.emit('menu:state', { items: models.listMenu({ onlyAvailable: false }) });
+        socket.emit('tables:state', { tables: models.listActiveTableTotals() });
         return;
       }
       if (role === 'master') {
@@ -65,6 +73,7 @@ function registerSocket(io) {
       try {
         const item = models.addCartItem({ sessionId, dinerId, menuItemId, qty, notes });
         broadcastSession(io, sessionId);
+        broadcastTableTotals(io);
         if (ack) ack({ ok: true, item });
       } catch (err) {
         if (ack) ack({ ok: false, error: err.message });
@@ -83,17 +92,26 @@ function registerSocket(io) {
 
     socket.on('cart:remove', ({ sessionId, itemId }) => {
       const removed = models.removeCartItem(itemId);
-      if (removed) broadcastSession(io, sessionId);
+      if (removed) {
+        broadcastSession(io, sessionId);
+        broadcastTableTotals(io);
+      }
     });
 
     socket.on('cart:restore', ({ sessionId, itemId }) => {
       const restored = models.restoreCartItem(itemId);
-      if (restored) broadcastSession(io, sessionId);
+      if (restored) {
+        broadcastSession(io, sessionId);
+        broadcastTableTotals(io);
+      }
     });
 
     socket.on('diner:setTip', ({ sessionId, dinerId, mode, value }) => {
       const diner = models.setDinerTip(dinerId, mode, value);
-      if (diner) broadcastSession(io, sessionId);
+      if (diner) {
+        broadcastSession(io, sessionId);
+        broadcastTableTotals(io);
+      }
     });
 
     socket.on('master:send', ({ sessionId, itemIds }) => {
@@ -120,6 +138,7 @@ function registerSocket(io) {
       if (item) {
         broadcastSession(io, sessionId);
         broadcastKitchen(io);
+        broadcastTableTotals(io);
       }
     });
 
@@ -155,6 +174,7 @@ function registerSocket(io) {
       const session = models.closeSession(sessionId);
       if (session) {
         io.to(sessionRoom(sessionId)).emit('session:closed');
+        broadcastTableTotals(io);
       }
     });
 
@@ -184,4 +204,4 @@ function registerSocket(io) {
   });
 }
 
-module.exports = { registerSocket, broadcastSession, broadcastKitchen, broadcastMenu };
+module.exports = { registerSocket, broadcastSession, broadcastKitchen, broadcastMenu, broadcastTableTotals };

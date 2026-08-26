@@ -2,6 +2,7 @@
   const STATION = window.STATION || 'kitchen';
   let items = [];
   let calls = [];
+  let tables = [];
   let socket = null;
   let soundOn = false;
   let audioCtx = null;
@@ -10,6 +11,7 @@
 
   const board = document.getElementById('board');
   const callsBoard = document.getElementById('calls');
+  const tablesBoard = document.getElementById('tables');
   const soundToggle = document.getElementById('soundToggle');
 
   soundToggle.addEventListener('click', () => {
@@ -80,6 +82,10 @@
       calls = data.calls;
       renderCalls();
     });
+    socket.on('tables:state', (data) => {
+      tables = data.tables;
+      renderTables();
+    });
   }
 
   function minutesAgo(ts) {
@@ -113,6 +119,24 @@
         socket.emit('waiter:resolveCall', { callId: b.dataset.resolveCall });
       })
     );
+  }
+
+  function renderTables() {
+    if (!tablesBoard) return;
+    if (!tables.length) {
+      tablesBoard.innerHTML = '';
+      return;
+    }
+    let html = `<div class="section-title">💳 סכומי שולחנות</div><div class="card">`;
+    for (const t of tables) {
+      html += `
+        <div class="order-line">
+          <div><b>שולחן ${t.tableNumber}</b> <span class="meta">· ${t.dinerCount} סועדים</span></div>
+          <div style="font-weight:800;font-size:16px">${money(t.total)}</div>
+        </div>`;
+    }
+    html += `</div>`;
+    tablesBoard.innerHTML = html;
   }
 
   function render() {

@@ -362,6 +362,26 @@ function sessionBillSummary(sessionId) {
   };
 }
 
+// Running total per active table, for the waiters' board — so staff can see
+// what a table owes without walking over to its master tablet.
+function listActiveTableTotals() {
+  return Object.values(state.sessions)
+    .filter((s) => s.status === 'active')
+    .map((session) => {
+      const table = getTable(session.tableId);
+      const bill = sessionBillSummary(session.id);
+      return {
+        sessionId: session.id,
+        tableNumber: table ? table.number : null,
+        tableName: table ? table.name : null,
+        dinerCount: bill.diners.length,
+        total: bill.total,
+      };
+    })
+    .filter((t) => t.total > 0)
+    .sort((a, b) => (a.tableNumber || 0) - (b.tableNumber || 0));
+}
+
 function enrichItem(item) {
   const diner = getDiner(item.dinerId);
   const session = getSession(item.sessionId);
@@ -405,6 +425,7 @@ module.exports = {
   listOpenCalls,
   listSessionCalls,
   sessionBillSummary,
+  listActiveTableTotals,
   addCartItem,
   getOrderItem,
   updateCartItemQty,
