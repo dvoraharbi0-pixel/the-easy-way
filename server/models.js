@@ -9,7 +9,7 @@ const SERVED_STATUS = 'served';
 const CANCELLED_STATUS = 'cancelled';
 const REMOVED_STATUS = 'removed';
 
-const COURSE_ORDER = ['drink', 'alcohol', 'cocktails', 'starter', 'main', 'dessert'];
+const COURSE_ORDER = ['starter', 'main', 'dessert', 'cocktails', 'alcohol', 'drink'];
 const COURSE_LABELS = {
   drink: 'שתייה קלה',
   alcohol: 'אלכוהול',

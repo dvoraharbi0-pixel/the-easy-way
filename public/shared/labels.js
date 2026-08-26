@@ -6,7 +6,7 @@ const COURSE_LABELS = {
   main: 'עיקריות',
   dessert: 'קינוחים',
 };
-const COURSE_ORDER = ['drink', 'alcohol', 'cocktails', 'starter', 'main', 'dessert'];
+const COURSE_ORDER = ['starter', 'main', 'dessert', 'cocktails', 'alcohol', 'drink'];
 const COURSE_ICON = { drink: '🥤', alcohol: '🍸', cocktails: '🍹', starter: '🥗', main: '🍽️', dessert: '🍰' };
 
 // Which prep station handles each course — the kitchen preps food, the bar
