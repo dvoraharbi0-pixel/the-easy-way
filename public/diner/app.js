@@ -289,7 +289,11 @@
         html += `<div class="section-title"${cat === categories[0] ? ' style="margin-top:8px"' : ''}>${cat}</div>`;
       }
       html += `<div class="dish-grid">`;
-      for (const m of courseItems.filter((x) => x.category === cat)) {
+      // Dishes without a real photo yet are pushed to the end of their
+      // category instead of sitting up front next to a placeholder icon.
+      const catItems = courseItems.filter((x) => x.category === cat);
+      const orderedCatItems = [...catItems.filter((x) => x.image), ...catItems.filter((x) => !x.image)];
+      for (const m of orderedCatItems) {
         const qty = qtyDraft[m.id] || 1;
         const noteOpen = notesOpen.has(m.id);
         const noteVal = notesDraft[m.id] || '';
