@@ -22,7 +22,7 @@ registerSocket(io);
 // Menu item photos are matched by name only, in any of these formats - so
 // uploading a differently-formatted file (jpg vs png vs webp) just works,
 // instead of needing the exact extension baked into seed.js to match.
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif'];
 const MENU_IMAGES_DIR = path.join(__dirname, '..', 'public', 'images', 'menu');
 
 function resolveMenuImage(slug) {
